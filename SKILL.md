@@ -1,6 +1,6 @@
 ---
 name: reverse-engineer-direct
-description: Assemble and use a minimal reverse-engineering toolkit for a specific result. Use for binaries, packaged apps, websites, runtimes, devices, firmware, captures, protocol behavior, and reconstruction verification. Do not invoke for ordinary source-repository review.
+description: Assemble and use a minimal reverse-engineering toolkit for a specific result. Use for binaries, packaged apps, websites, runtimes, devices, firmware images and updates, captures, protocol behavior, and reconstruction verification. Do not invoke for ordinary source-repository review.
 ---
 
 # Build a task-specific reverse-engineering toolkit
@@ -21,7 +21,8 @@ Start with the result the user wants: a function explanation, recovered source, 
 | --- | --- |
 | Native executables, Apple bundles, native UI, crashes, binary layout, EVM bytecode | [Native and artifacts](references/native-and-artifacts.md) |
 | JavaScript packages, Electron, web pages, CDP, browser scenarios, source maps, network captures | [JavaScript and web](references/javascript-and-web.md) |
-| .NET, Android APKs and devices, JEB, firmware | [Managed, mobile, and firmware](references/managed-mobile-firmware.md) |
+| .NET, Android APKs and devices, JEB | [Managed and mobile](references/managed-mobile-firmware.md) |
+| Firmware images, flash dumps, boot chains, embedded Linux, MCU/RTOS or UEFI code, updates, and hardware-assisted analysis | [Firmware](references/firmware.md) |
 | Process runs, protocol behavior, comparisons, reconstruction and verification | [Process and reconstruction](references/process-and-reconstruction.md) |
 
 ## Design invariants

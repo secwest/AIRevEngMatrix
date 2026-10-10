@@ -11,7 +11,8 @@ The deliverable is the finding: for example, a function explanation, recovered s
 - [Assembly patterns](references/assembly-patterns.md): how to select and build only the needed components.
 - [Native and artifact recipes](references/native-and-artifacts.md).
 - [JavaScript and web recipes](references/javascript-and-web.md).
-- [Managed, mobile and firmware recipes](references/managed-mobile-firmware.md).
+- [Managed and mobile recipes](references/managed-mobile-firmware.md).
+- [Firmware recipes](references/firmware.md): image mapping, boot chains, embedded Linux, MCU/RTOS and UEFI code, update logic, and controlled execution.
 - [Process, protocol and comparison recipes](references/process-and-reconstruction.md).
 - [Optional graph and evidence conventions](references/evidence-and-runtime.md).
 
@@ -25,6 +26,7 @@ Examples:
 - “Recover the shipped modules behind this Electron UI action and identify the IPC boundary.”
 - “Compare these two APKs and tell me which externally visible behavior changed.”
 - “From these authorized captures, describe the protocol state transitions and stable remote fingerprints.”
+- “Map this firmware update, identify the code that starts its network service, and show what a remote client could actually observe.”
 
 ## Scope
 

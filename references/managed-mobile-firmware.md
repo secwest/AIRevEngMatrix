@@ -1,4 +1,4 @@
-# Managed code, mobile devices, and firmware build recipes
+# Managed code and mobile device build recipes
 
 Build only what the requested result needs. Use [graph and evidence conventions](evidence-and-runtime.md) when formal cross-layer joins or portable provenance are needed. An engine listed here is a candidate dependency; probe the installed version and API. Do not present an adapter specification as evidence that a licensed engine or device exists.
 
@@ -31,13 +31,8 @@ State-changing adapters are separate: push file, install/uninstall package, star
 
 JEB is a licensed, running producer, not something the skill can reproduce. If available, probe its client/version, open an existing project or import with its documented API, enumerate units, decompile selected items, and retain JEB item IDs and raw output. Do not silently fall back from JEB-specific claims to JADX or another engine. A generic question may use another available engine if it supports the needed fact; a JEB-specific request requires JEB.
 
-## Firmware
-
-Inspect regions with an installed signature scanner such as Binwalk, then confirm boundaries and signatures against raw bytes. Report offset, length if known, candidate format, confidence and overlap. For extraction, use a format-specific parser or Unblob in a bounded output directory, preserve parent offset and extractor version, reject path escapes and decompression bombs, and hash every extracted child. Filesystems, kernels, archives and native executables then feed their appropriate analyzers as new artifacts. A signature hit is not proof that a full valid filesystem exists; extraction success and structure checks raise confidence. Never mount or execute firmware as a side effect of static inspection.
-
 ## Acceptance examples
 
 - A known .NET fixture yields correct method signature, CIL call and native declaration without loading the assembly.
 - An APK's decoded manifest package/version resolves to original resource IDs and the APK digest.
 - A pulled APK's local digest is recorded and split acquisition is complete or explicitly partial.
-- A firmware extraction's children remain inside its output directory and retain parent offset provenance.

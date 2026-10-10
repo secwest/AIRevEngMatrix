@@ -1,0 +1,46 @@
+schema_version: 1
+kind: bus_decoding
+record_state: draft
+question: null
+target_identity: null
+capture:
+  path: null
+  sha256: null
+  instrument: null
+  firmware_and_driver_version: null
+  interface: null
+  channel_to_pin: {}
+  voltage_thresholds: null
+  sample_rate_hz: null
+  time_origin_and_resolution: null
+  duration_seconds: null
+  dropped_samples_or_packets: unknown
+  filters: []
+decoder:
+  engine: null
+  version: null
+  protocol: null
+  clock_polarity_and_phase: null
+  bit_order_and_framing: null
+  options: {}
+  argv: []
+can_database:
+  path: null
+  sha256: null
+  format: null
+  selected_frame_ids: []
+  standard_extended_fd_flags: null
+  multiplexing_and_scaling: null
+analysis:
+  known_device_states: []
+  transactions: [] # Entries retain raw sample/packet references and direction
+  field_hypotheses: []
+  framing_or_checksum_failures: []
+checks:
+  raw_edge_or_frame_inspection: unobserved
+  independent_known_state_match: unobserved
+  encode_decode_consistency: unobserved
+result:
+  outcome: unobserved
+  completeness: unknown
+  limitations: []

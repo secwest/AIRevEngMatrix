@@ -1,0 +1,44 @@
+schema_version: 1
+kind: runtime_study
+record_state: draft
+question: null
+family: null # wasm, jvm, python, or go
+target:
+  container: null
+  container_sha256: null
+  member_path: null
+  member_sha256: null
+  format_or_bytecode_version: null
+  compiler_or_runtime_version: null
+  architecture: null
+  extraction_provenance: []
+engine:
+  name: null
+  version: null
+  feature_flags: []
+  argv: []
+  support_probe: null
+selection:
+  module_or_class: null
+  function_method_or_code_object: null
+  signature_or_descriptor: null
+  coordinate_kind: null
+  address_index_or_offset: null
+environment:
+  dependencies: []
+  classpath_or_host_imports: []
+  load_address_mapping: null
+  execution_required: false
+analysis:
+  raw_outputs: []
+  interfaces_and_references: []
+  reconstructed_sources: []
+  native_or_dynamic_boundaries: []
+  source_location_checks: []
+  database_mutations_and_readback: []
+result:
+  outcome: unobserved
+  completeness: unknown
+  decisive_instruction_checks: []
+  runtime_checks: []
+  limitations: []

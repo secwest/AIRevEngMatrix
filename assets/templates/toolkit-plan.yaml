@@ -1,0 +1,45 @@
+schema_version: 1
+kind: toolkit_plan
+record_state: draft
+question: null
+deliverable: null
+target:
+  path_or_selector: null
+  sha256: null
+  family: null
+  format_version: null
+  architecture: null
+host:
+  os: null
+  architecture: null
+  execution_environment: null
+scope:
+  input_artifacts: []
+  permitted_targets: []
+  planned_state_changes: []
+components:
+  - required_fact: null
+    engine: null
+    version: null
+    source: null
+    license: null
+    availability: unprobed
+    target_support_check: null
+    invocation:
+      argv: []
+      cwd: null
+      environment: {}
+    output_artifact: null
+    validation: null
+    fallback_or_gap: null
+limits:
+  wall_seconds: null
+  input_bytes: null
+  output_bytes: null
+  records: null
+checks: []
+result:
+  outcome: unobserved
+  completeness: unknown
+  decisive_evidence: []
+  remaining_gaps: []

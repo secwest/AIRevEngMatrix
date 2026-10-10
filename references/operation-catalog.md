@@ -170,6 +170,60 @@ Methods: [Sessions and evidence records](evidence-and-runtime.md) and [navigatio
 | `get_navigation_context`, `inspect_address_context` | Selected GUI session or exact address and artifact. | Document/address/function context plus names, comment channels and bookmarks. | Sequential observations are not an atomic snapshot; unsupported facets stay unavailable. |
 | `inspect_analysis_view` | Completed result ID, facet/item selector, offset and bounded limit. | Deterministic page/summary with parent identity, view digest and coverage. | No analysis rerun; stable IDs resolve ambiguous paths and page omissions do not prove absence. |
 
+## Firmware execution, acquisition, and signals
+
+Method: [Firmware lab](firmware-lab.md). Records: [analysis templates](templates.md).
+
+| Operation | Input and method | Result | Check or limit |
+| --- | --- | --- | --- |
+| `plan_firmware_experiment` | Image identity, desired observation, ABI and dependency inventory; select compatible execution scope. | Minimal platform/harness specification and missing dependencies. | CPU support alone does not establish peripherals, loader, or OS behavior. |
+| `run_firmware_experiment` | Bound firmware, model, initial state, input and execution limits. | Trace, output, completion reason, stub use and unsupported accesses. | Restore required state; substituted behavior remains conditional. |
+| `compare_firmware_observations` | Compatible model/device traces, time bases and selected observations. | Agreements, mismatches, incomparable events and model gaps. | Timing normalization and capture loss cannot hide decisive differences. |
+| `acquire_flash_image`, `acquire_debug_memory` | Explicit chip/device, connection, region and read procedure. | Original read artifacts, digests, access errors and observed effects. | Verify voltage/support and attach/reset semantics; protected and side-effectful ranges remain explicit. |
+| `verify_acquisition` | Repeated dumps, expected size/map and known byte invariants. | Equality/range differences and acquisition completeness. | Stable reads can still cover only an alias or partial address space. |
+| `decode_bus_capture` | Raw signal/packet capture, pin/channel map and decoder settings. | Transactions linked to raw samples/packets with errors and timing. | Verify representative raw edges and record loss/filtering. |
+| `inspect_can_database`, `verify_bus_fields` | Database and captured frames or field hypotheses with known device states. | Message/signal interpretation or checked field outcomes. | Database round trips establish consistency; independent states establish meaning. |
+
+## Harnesses, failures, and constraints
+
+Method: [Testing and constraints](testing-and-constraints.md).
+
+| Operation | Input and method | Result | Check or limit |
+| --- | --- | --- | --- |
+| `build_fuzz_harness` | Exact input boundary/ABI, dependencies, state reset and outcome definitions. | Minimal harness with baseline and instrumentation checks. | Normal rejection differs from a target fault; persistent state must reset. |
+| `run_fuzz_campaign` | Checked harness, corpus/session model, instrumentation and finite budget. | Run metadata, observed coverage where available and classified cases. | Traffic delivery does not establish code coverage; stop if reset loses baseline. |
+| `minimize_failure`, `replay_failure` | Failing bytes/sequence, target/environment and explicit failure oracle. | Smaller reproducer or concrete replay outcome with source case identity. | Keep original inputs; minimization must preserve the same failure criterion. |
+| `solve_path_constraints` | Exact binary/load mapping, initial state, symbolic inputs, goals and limits. | Witness or scoped unsat/exhausted/timeout/unsupported result. | Record unconstrained state and external summaries; no global infeasibility from exhausted search. |
+| `trace_input_influence` | Concrete execution driver, source bytes, sink and taint policy. | Instruction-anchored dependencies and trace coverage. | Aliasing, implicit flow and unsupported instructions constrain the claim. |
+| `replay_symbolic_witness` | Model-derived input and concrete target/harness with matching initial state. | Checked goal observation or a model/target mismatch. | Process exit alone does not verify the requested branch or output. |
+
+## Custom formats and additional runtimes
+
+Method: [Formats and runtimes](formats-and-runtimes.md).
+
+| Operation | Input and method | Result | Check or limit |
+| --- | --- | --- | --- |
+| `specify_binary_format` | Independently varying samples and byte/field hypotheses. | Layout specification with bounds, transforms and unknown regions. | Correlation alone does not establish field meaning or checksum coverage. |
+| `generate_format_parser`, `validate_format_parser` | Format schema, compiler/runtime selection and positive/negative fixtures. | Generated parser or fixture outcomes with offsets and diagnostics. | Bound lengths/expansion and enforce trailing-data policy; parsing does not imply serialization. |
+| `inspect_wasm_module`, `inspect_wasm_component` | Exact bytes and selected feature settings; validate and inspect instructions/interfaces. | Module/section/index records or component interfaces and host dependencies. | Core modules and components differ; validation does not establish runtime behavior. |
+| `inspect_jvm_archive`, `inspect_jvm_method` | Archive/runtime variant or exact class/name/descriptor plus dependencies. | Inventory or decompiler/bytecode method interpretation. | Preserve synthetic/bridge methods and check decisive bytecode without class initialization. |
+| `inspect_python_bytecode` | Identified implementation/version and selected code objects. | Instructions, constants, nested objects and import relationships. | Unsupported versions and native boundaries remain explicit; never import for static inspection. |
+| `recover_go_metadata` | Exact binary and supported runtime metadata parser. | Available function/type/source records and address ranges. | Check instruction boundaries and coordinate mappings before database import. |
+
+## Matching, inventory, memory, and replay
+
+Method: [Matching and runtime artifacts](matching-and-runtime-artifacts.md).
+
+| Operation | Input and method | Result | Check or limit |
+| --- | --- | --- | --- |
+| `match_binary_functions` | Compatible identified analysis exports and matching settings. | Exact/heuristic/ambiguous/unmatched functions and proposed changes. | Inspect both instruction streams; splits, merges and inlining can defeat one-to-one matching. |
+| `inventory_software_components` | Extracted tree or supported image plus cataloger scope. | Component inventory/SBOM with identification evidence and omissions. | Package presence or version alone does not establish use, reachability or vulnerability. |
+| `identify_capability_candidates` | Supported input and versioned capability rules. | Located rule matches, warnings and analysis scope. | Confirm decisive code paths; absent matches in incomplete analysis prove little. |
+| `recover_encoded_strings` | Supported executable, selected extraction categories and limits. | Strings with encoding, category, decoding origin and locations. | Recovered content does not prove application use or reachability. |
+| `inspect_system_memory` | Image/acquisition identity, compatible OS layers/symbols and selected queries. | Question-specific runtime records with source coordinates and errors. | Check build/symbol identity, capture gaps and representative raw structures. |
+| `extract_memory_artifact` | Selected mapped ranges, image identity and optional reconstruction plan. | Raw memory extraction and separately identified rebuilt artifact when requested. | Missing pages, relocations and headers remain explicit; validate rebuilt file layout. |
+| `record_process_execution`, `replay_process_execution` | Supported host, exact launch/input/environment or existing compatible trace. | Recording and dependencies or selected event/state explanation. | Initial execution has effects; one recorded schedule does not cover every execution. |
+
 ## Selection and verification
 
 The [capability matrix](capability-index.md) starts from the question; this catalogue identifies the primitives behind the selected result. [Toolkit assembly](assembly-patterns.md) describes composition. The [firmware methods](firmware.md) also cover boot reconstruction, MCU/RTOS analysis, UEFI, delta updates, and logical partitions beyond basic scanning and extraction.

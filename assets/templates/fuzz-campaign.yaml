@@ -1,0 +1,57 @@
+schema_version: 1
+kind: fuzz_campaign
+record_state: draft
+question: null
+target:
+  path_or_endpoint: null
+  sha256_or_build_identity: null
+  architecture_and_abi: null
+  dependency_artifacts: []
+engine:
+  name: null
+  version: null
+  mode: null
+  argv: []
+  cwd: null
+  environment: {}
+harness:
+  source_and_sha256: null
+  entry_function_or_command: null
+  input_delivery: null
+  input_length_and_ownership: null
+  maximum_input_bytes: null
+  prerequisite_messages: []
+  framing_length_checksum_policy: null
+  initial_state: null
+  reset_between_cases: null
+  cleanup: null
+  isolation_environment: null
+oracles:
+  normal_completion: null
+  expected_rejection: null
+  fault: null
+  timeout: null
+  semantic_mismatch: null
+limits:
+  campaign_seconds: null
+  case_timeout_ms: null
+  maximum_cases: null
+  rate_per_second: null
+  memory_and_storage: null
+baseline:
+  normal_case: null
+  malformed_case: null
+  target_code_observed: unobserved
+  coverage_stability: unobserved
+  reset_check: unobserved
+corpus:
+  seeds_and_digests: []
+  coverage_scope: null
+  reduction_criterion: null
+findings: [] # Entries: original_input, minimized_input, sequence, fault_signature, replay
+result:
+  outcome: unobserved
+  executed_cases: null
+  observed_coverage: null
+  replayed_findings: []
+  limitations: []

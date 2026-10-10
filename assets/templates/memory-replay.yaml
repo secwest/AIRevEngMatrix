@@ -1,0 +1,50 @@
+schema_version: 1
+kind: memory_replay
+record_state: draft
+question: null
+mode: null # memory_image or record_replay
+engine:
+  name: null
+  version: null
+  host_support_check: null
+  plugins_or_debugger_version: null
+target:
+  image_or_trace: null
+  sha256_or_manifest: null
+  os_and_build: null
+  architecture: null
+  process_identity: null
+  executable_and_dependency_digests: []
+acquisition:
+  method: null
+  time_window: null
+  physical_coverage: null
+  missing_or_unstable_ranges: []
+symbols:
+  sources_and_digests: []
+  identity_match: unobserved
+  address_layers: []
+recording:
+  argv: []
+  cwd: null
+  environment: {}
+  input_artifacts: []
+  external_effects: []
+  time_and_storage_limits: null
+  trace_dependency_packaging: null
+analysis:
+  queries_or_plugins: []
+  requested_observation: null
+  event_thread_and_address: null
+  extracted_ranges: []
+  reconstruction_steps: []
+checks:
+  independent_structure_or_bytes: unobserved
+  known_event_replay: unobserved
+  extracted_artifact_validation: unobserved
+result:
+  outcome: unobserved
+  completeness: unknown
+  raw_outputs: []
+  decisive_evidence: []
+  limitations: []

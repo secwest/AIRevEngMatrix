@@ -1,0 +1,41 @@
+schema_version: 1
+kind: format_study
+record_state: draft
+question: null
+format_name_and_version: null
+samples: [] # Entries: path, sha256, independently_known_properties
+fields: [] # Entries: name, parent, offset, size, endian, meaning, confidence, evidence
+layout:
+  signature: null
+  version_selector: null
+  offset_origin: null
+  alignment: null
+  length_and_count_relationships: []
+  checksum_algorithms_and_coverage: []
+  unknown_tags_and_fields: []
+  trailing_data_policy: null
+parser:
+  engine: null
+  compiler_version: null
+  runtime_version: null
+  output_language: null
+  schema_path: null
+  generated_source: null
+  invocation_argv: []
+limits:
+  input_bytes: null
+  records: null
+  nesting_depth: null
+  decompressed_bytes: null
+checks:
+  fixtures: []
+  field_to_source_ranges: unobserved
+  truncation_and_bad_lengths: unobserved
+  checksum_validation: unobserved
+  exact_consumption: unobserved
+  encode_decode_if_supported: unobserved
+result:
+  outcome: unobserved
+  decoded_artifacts: []
+  unexplained_regions: []
+  limitations: []

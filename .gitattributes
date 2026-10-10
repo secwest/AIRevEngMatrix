@@ -1,3 +1,6 @@
 *.md text eol=lf
 *.py text eol=lf
+*.yaml text eol=lf
+*.ksy text eol=lf
+*.csv text eol=lf
 .gitignore text eol=lf

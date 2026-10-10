@@ -40,6 +40,10 @@ These branches are choices. A file-format question can finish without a debugger
 | Embedded Linux, MCU/RTOS, and UEFI firmware | What is in the image? How does it boot? Which service is exposed? How are updates checked? | Region and partition maps, extracted files, boot paths, task/interrupt analysis, update and trust-path findings |
 | Processes, protocols, and crashes | What happened during a run? How are messages framed? Which signals are remotely visible? | Process effects, crash state, message sequences, fingerprint candidates with tested conditions |
 | EVM bytecode | Which dispatch branches, selectors, events, and storage accesses are visible? | Instruction-anchored interface candidates and unresolved ABI details |
+| Custom formats, WebAssembly, JVM, Python, and Go | How is a record encoded? Which runtime method implements a feature? Which host/native boundaries matter? | Checked format parsers, runtime-specific instructions/interfaces, recovered metadata, and unresolved dependencies |
+| Flash chips, debug interfaces, and hardware buses | Are the acquired bytes consistent? What does a transaction mean? Does a model reproduce the device's response? | Verified dumps, decoded captures, minimal firmware experiments, and model limitations |
+| Parsers and stateful services under test | Which input reaches a branch or produces a failure? Which bytes influence a result? | Bounded test harnesses, replayable failures, concrete path witnesses, and input-dependency explanations |
+| System memory and recorded executions | What state existed at capture time? Which earlier event caused the observed fault? | Located runtime artifacts, checked extractions, and replay-based event explanations |
 | Releases and reconstructions | What changed? Does a replacement reproduce the required behavior? | Matched and unmatched changes; passing, failing, missing, and incomparable cases |
 
 The [capability matrix](references/capability-index.md) maps individual questions to methods, outputs, and checks. The [operation catalogue](references/operation-catalog.md) lists the individual analysis primitives behind those results, with inputs, outputs, and validation requirements.
@@ -65,6 +69,11 @@ This taxonomy groups engines and interfaces by role. For individual operations s
 | JavaScript syntax and modules | Babel, Acorn, SWC, TypeScript AST APIs | Parse syntax and trace imports, handlers, and calls; dynamic loading and computed names may remain unresolved | [JavaScript](references/javascript-and-web.md) |
 | Electron packaging and source recovery | `@electron/asar`, source-map libraries, formatters, Wakaru | Read shipped modules and recover readable representations; missing external members or original sources remain gaps | [Electron and sources](references/javascript-and-web.md) |
 | EVM decoding | Strict hex/bytecode decoder, EVM disassembler or analysis engine | Identify dispatch, event, and storage patterns; an inferred selector label does not establish a full ABI | [EVM](references/native-and-artifacts.md) |
+| Custom binary formats | Kaitai Struct | Describe a layout and generate a parser; bounds, malformed inputs, and unknown fields need explicit checks | [Format recovery](references/formats-and-runtimes.md) |
+| WebAssembly | wasm-tools | Validate and inspect core modules or components, instructions and interfaces; host imports determine external behavior | [Wasm](references/formats-and-runtimes.md) |
+| JVM classes and archives | Vineflower, bytecode inspection | Reconstruct readable Java and explain class/method relationships; descriptors and runtime variants preserve identity | [JVM](references/formats-and-runtimes.md) |
+| Python bytecode | xdis, a separate format-specific package extractor when needed | Inspect version-qualified code objects and instructions; disassembly support does not guarantee source recovery | [Python](references/formats-and-runtimes.md) |
+| Go metadata | GoReSym with a native analyzer | Recover available function/type/source metadata; check runtime layout support and addresses | [Go](references/formats-and-runtimes.md) |
 
 ### Firmware and hardware
 
@@ -74,7 +83,10 @@ This taxonomy groups engines and interfaces by role. For individual operations s
 | Filesystem and container recovery | Unblob, SquashFS, UBI/UBIFS, JFFS2, ext and CPIO tools | Recover components and files with metadata; flash geometry, compression, and logical extents affect mapping | [Extraction](references/firmware.md) |
 | Boot and update metadata | U-Boot/FIT tools, `dtc`/libfdt, partition parsers, Android OTA and logical-partition parsers | Read image selection, hardware description, load addresses, update operations, and slot relationships; delta updates may require an exact base image | [Boot and updates](references/firmware.md) |
 | UEFI and PC firmware | UEFITool/UEFIExtract, firmware-volume and PE/COFF parsers, CHIPSEC | Inspect volumes, modules, variables, and platform state; static parsing and privileged hardware operations have different requirements | [UEFI](references/firmware.md) |
-| Emulation and device observation | QEMU, serial capture, OpenOCD with a compatible probe, GDB | Observe a process, supported machine, or physical target; CPU support alone does not supply a board's peripherals | [Runtime observation](references/firmware.md) |
+| Emulation and device observation | QEMU, Renode, Qiling, serial capture, OpenOCD with a compatible probe, GDB | Observe a process, supported machine, or physical target; record peripheral models, OS dependencies, substitutions and reset | [Runtime observation](references/firmware.md), [firmware experiments](references/firmware-lab.md) |
+| Flash and MCU acquisition | flashrom, pyOCD | Read supported chips or debug memory with an identified programmer/probe; check repeated bytes, address coverage and attach effects | [Acquisition](references/firmware-lab.md) |
+| Hardware signals | sigrok, PulseView, sigrok-cli | Acquire and decode supported instrument captures; preserve raw samples, pin mapping and decoder settings | [Signals](references/firmware-lab.md) |
+| CAN interpretation | cantools | Read supported databases and decode/encode frames; validate field meaning against independently known device states | [CAN](references/firmware-lab.md) |
 
 ### Runtime, traffic, and comparison
 
@@ -90,6 +102,21 @@ This taxonomy groups engines and interfaces by role. For individual operations s
 | Differences and reconstruction | Digest/member manifests, instruction/AST/CIL comparators, image diffs, scenario comparators | Align matching inputs and compare structure or behavior; similarity and passing examples have a bounded scope | [Comparison](references/process-and-reconstruction.md) |
 | Evidence and navigation | Small JSON adapters, bounded graph queries, digest-checked bundles, optional obligation ledgers | Preserve supporting records and unresolved questions for larger investigations | [Evidence](references/evidence-and-runtime.md) |
 
+### Testing, matching, and runtime artifacts
+
+A **fuzzer** generates varied inputs and records outcomes. **Symbolic execution** represents selected inputs as variables and solves conditions on their paths. **Taint analysis** tracks input influence under a defined policy. Each needs a target-specific environment and concrete checks. A **software inventory** identifies components; a **memory analyzer** recovers structures from captured runtime state.
+
+| Tool class | Candidate tools or interfaces | Role and main limits | Method |
+| --- | --- | --- | --- |
+| Coverage-guided testing | AFL++ with compatible source or binary instrumentation | Explore a selected input boundary; requires a checked harness, reset and failure oracle | [Fuzzing](references/testing-and-constraints.md) |
+| Protocol testing | boofuzz | Mutate structured exchanges with session/reset/monitor logic; message delivery does not measure code coverage | [Protocol campaigns](references/testing-and-constraints.md) |
+| Symbolic paths and input influence | angr, Triton | Find constrained inputs or instruction-level dependencies; replay witnesses and record model assumptions | [Constraints and taint](references/testing-and-constraints.md) |
+| Function matching | Diaphora with compatible IDA exports | Match functions across builds and inspect changes; retain heuristic, ambiguous, and unmatched outcomes | [Matching](references/matching-and-runtime-artifacts.md) |
+| Component inventory | Syft | Produce an inventory/SBOM from supported filesystems, archives, or images; stripped/static components may remain unidentified | [Inventory](references/matching-and-runtime-artifacts.md) |
+| Capability and string discovery | capa, FLOSS | Find located behavior candidates or decoded strings; confirm decisive leads in code or observations | [Discovery](references/matching-and-runtime-artifacts.md) |
+| System memory | Volatility 3 | Extract selected runtime structures from supported captures; acquisition, symbols and address layers determine coverage | [Memory](references/matching-and-runtime-artifacts.md) |
+| Execution recording and replay | rr | Debug a recorded execution on a supported Linux host; one schedule does not cover every possible run | [Replay](references/matching-and-runtime-artifacts.md) |
+
 An installed engine still needs the right version, architecture support, license where applicable, and accessible API or CLI. Hardware observation also needs the actual device and compatible interfaces. The [assembly guide](references/assembly-patterns.md) describes these selection decisions.
 
 ## Example toolkits
@@ -102,6 +129,25 @@ An installed engine still needs the right version, architecture support, license
 | Where does this Electron button write a file? | ASAR/member reader, JS parser, selected runtime capture when needed | UI-to-IPC-to-filesystem path with evidence at each boundary |
 | Can this service be identified remotely? | Existing captures or bounded authorized probes, protocol decoder, comparison controls | Observable signals, preconditions, stability, and attribution limits |
 | Does a replacement preserve the required behavior? | Original fixtures, process or browser harness, focused comparator | Results for each required case and explicit gaps |
+| Can this firmware handler reproduce a captured reply? | Identified image, compatible Renode/Qiling environment, one captured input | Small experiment, checked reply, model assumptions and differences |
+| Which parser input causes this failure? | Baseline fixture, AFL++ harness, concrete replay | Original/minimized input, failure classification and repeatable reproduction |
+| What is this CAN signal measuring? | Raw capture, cantools database, independently known device states | Checked field interpretation with frame references and remaining uncertainty |
+
+## Reusable templates
+
+The [template guide](references/templates.md) links copyable working records and explains their fields. A record captures the inputs, method, expected result, and checks for an actual investigation. YAML records are specifications and observation records; they do not execute tools. Unknown values remain explicit until measured.
+
+| Work | Templates |
+| --- | --- |
+| Select a small toolkit and deliver a finding | [Toolkit plan](assets/templates/toolkit-plan.yaml), [finding](assets/templates/finding.md) |
+| Acquire firmware and run controlled experiments | [Acquisition](assets/templates/acquisition.yaml), [firmware experiment](assets/templates/firmware-experiment.yaml) |
+| Decode physical signals or CAN frames | [Bus decoding](assets/templates/bus-decoding.yaml) |
+| Test inputs and explain path conditions | [Fuzz campaign](assets/templates/fuzz-campaign.yaml), [path query](assets/templates/path-query.yaml), [test cases](assets/templates/test-cases.csv) |
+| Recover a format or inspect another runtime | [Format study](assets/templates/format-study.yaml), [runtime study](assets/templates/runtime-study.yaml) |
+| Compare builds, inventory components, or inspect runtime state | [Comparison/inventory](assets/templates/comparison-inventory.yaml), [memory/replay](assets/templates/memory-replay.yaml) |
+| Build a small declarative parser | [Synthetic Kaitai schema](assets/templates/framed-record.ksy), [positive and negative fixtures](assets/templates/framed-record-fixtures.yaml) |
+
+The Kaitai example is a complete synthetic format with a fixed header and bounded payload. Its fixtures cover valid records, invalid fields, truncation, and exact-consumption checks. Applying it to a real format requires a recovered layout and checks against that format's samples.
 
 ## Use and repository guide
 
@@ -117,6 +163,11 @@ The repository root is a skill directory. It can be installed under the name `re
 | [JavaScript and web](references/javascript-and-web.md) | Shipped source, Electron, browser capture, and scenarios |
 | [Managed code and mobile devices](references/managed-mobile-firmware.md) | .NET, Android packages, ADB, and JEB |
 | [Firmware](references/firmware.md) | Image recovery, embedded Linux, MCU/RTOS, UEFI, boot, and updates |
+| [Firmware lab](references/firmware-lab.md) | Execution models, chip/debug acquisition, signals, and CAN |
+| [Testing and constraints](references/testing-and-constraints.md) | Fuzz harnesses, protocol campaigns, failure replay, symbolic inputs, and taint |
+| [Formats and runtimes](references/formats-and-runtimes.md) | Kaitai parsers, Wasm, JVM, Python bytecode, and Go metadata |
+| [Matching and runtime artifacts](references/matching-and-runtime-artifacts.md) | Function matching, software inventory, capability/string discovery, memory, and rr |
+| [Template guide](references/templates.md) | Copyable experiment specifications, records, fixtures, and findings |
 | [Process, protocol, and comparison](references/process-and-reconstruction.md) | Observed behavior, fingerprints, differences, and reconstruction |
 | [Graph and evidence conventions](references/evidence-and-runtime.md) | Optional structures for joins, provenance, and audit |
 

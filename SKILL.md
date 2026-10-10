@@ -23,7 +23,13 @@ Start with the result the user wants: a function explanation, recovered source, 
 | JavaScript packages, Electron, web pages, CDP, browser scenarios, source maps, network captures | [JavaScript and web](references/javascript-and-web.md) |
 | .NET, Android APKs and devices, JEB | [Managed and mobile](references/managed-mobile-firmware.md) |
 | Firmware images, flash dumps, boot chains, embedded Linux, MCU/RTOS or UEFI code, updates, and hardware-assisted analysis | [Firmware](references/firmware.md) |
+| Firmware execution models, flash/debug acquisition, hardware signals, or CAN decoding | [Firmware lab](references/firmware-lab.md) |
+| Fuzzing, failure minimization, symbolic paths, or dynamic input influence | [Testing and constraints](references/testing-and-constraints.md) |
+| Custom binary formats, WebAssembly, JVM, Python bytecode, or Go metadata | [Formats and runtimes](references/formats-and-runtimes.md) |
+| Function matching, component inventory, capability/string discovery, system memory, or recorded execution | [Matching and runtime artifacts](references/matching-and-runtime-artifacts.md) |
 | Process runs, protocol behavior, comparisons, reconstruction and verification | [Process and reconstruction](references/process-and-reconstruction.md) |
+
+Use [analysis templates](references/templates.md) for repeatable acquisition, experiments, harnesses, or reports. Copy only the relevant assets into the task workspace. Their YAML files are working specifications, not executable tool configurations; unknown fields remain unknown until checked. Keep engine-specific code limited to the selected result.
 
 ## Design invariants
 

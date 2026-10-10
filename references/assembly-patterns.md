@@ -34,6 +34,8 @@ toolkit/
 
 The shape is optional. A one-question investigation may need only one script; repeated analyses or portable results may need a manifest, shared data model, or run archive.
 
+The [template library](templates.md) supplies copyable records for a toolkit plan, firmware acquisition/execution, bus decoding, fuzzing, path queries, format/runtime analysis, matching/inventory, memory/replay, and findings. These records define the experiment and evidence; they are not a universal runner configuration. The included synthetic Kaitai schema is an engine-native parser example with positive and negative fixtures.
+
 The common interface can be represented as:
 
 ```text
@@ -71,5 +73,11 @@ The process ends when the claim has enough support for its intended use, or the 
 **APK on device.** Probe adb and select serial -> record device/build/package identity -> pull base and splits, hash -> parse manifest/resources/DEX with installed engines -> trace selected component/class/method -> use bounded logcat or a scenario only if runtime proof is required -> report acquisition completeness and code/runtime joins.
 
 **Firmware service.** Hash image -> identify and validate container layers -> recover the relevant filesystem and its metadata -> follow init/configuration to the service executable -> inspect listener and handler code -> check a matching capture when remote reachability matters -> report the startup path, externally observable behavior, and missing configuration or hardware dependencies.
+
+**MCU transaction.** Bind firmware and board -> capture a known peripheral transaction -> locate the handler -> create the smallest compatible Renode or other execution model -> record substitutions -> replay input from a defined reset state -> compare the observed output and hardware accesses. [Firmware lab](firmware-lab.md) defines the model and capture checks.
+
+**Parser failure.** Identify the parser boundary and ABI -> establish normal/rejected-input cases -> build a resettable harness -> verify target instrumentation -> run a bounded AFL++ or protocol campaign -> minimize a failure -> replay it with the same environment. [Testing and constraints](testing-and-constraints.md) defines oracles, limits, and concrete witness checks.
+
+**Runtime-specific function.** Identify Wasm/JVM/Python/Go format and version -> choose a supporting engine -> bind function indices, descriptors, code objects, or recovered addresses -> inspect decisive instructions and host/native boundaries -> report the supported interpretation. [Formats and runtimes](formats-and-runtimes.md) defines each identity system.
 
 **Reconstruction parity.** Capture authoritative scenario with exact inputs/settings -> derive obligations and required cases -> bind each to reconstruction owner -> run same fixtures against reconstruction -> normalize declared nondeterminism -> compare outputs/effects -> keep failures, unmatched cases and weak authority open.

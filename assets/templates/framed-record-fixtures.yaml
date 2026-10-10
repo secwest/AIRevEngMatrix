@@ -1,0 +1,40 @@
+schema_version: 1
+kind: parser_fixtures
+format_schema: framed-record.ksy
+input_encoding: hex
+wrapper_policy: exact_consumption
+cases:
+  - id: valid_payload
+    input: "52564d58010300616263"
+    expected_parse: success
+    expected_consumed_bytes: 10
+    expected_payload_hex: "616263"
+    expected_wrapper: success
+  - id: empty_payload
+    input: "52564d58010000"
+    expected_parse: success
+    expected_consumed_bytes: 7
+    expected_payload_hex: ""
+    expected_wrapper: success
+  - id: wrong_magic
+    input: "00564d58010000"
+    expected_parse: validation_error
+    expected_wrapper: parse_error
+  - id: unsupported_version
+    input: "52564d58020000"
+    expected_parse: validation_error
+    expected_wrapper: parse_error
+  - id: excessive_length
+    input: "52564d58010104"
+    expected_parse: validation_error
+    expected_wrapper: parse_error
+  - id: truncated_payload
+    input: "52564d580103006162"
+    expected_parse: eof_error
+    expected_wrapper: parse_error
+  - id: trailing_byte
+    input: "52564d58010000ff"
+    expected_parse: success
+    expected_consumed_bytes: 7
+    expected_payload_hex: ""
+    expected_wrapper: trailing_data_error

@@ -1,0 +1,42 @@
+schema_version: 1
+kind: comparison_inventory
+record_state: draft
+question: null
+mode: null # function_match, component_inventory, or capability_strings
+inputs: [] # Entries: role, path, sha256, architecture, build_identity, provenance
+engine:
+  name: null
+  version: null
+  analysis_or_export_version: null
+  rules_or_cataloger_configuration: null
+  rules_sha256: null
+  argv: []
+scope:
+  selected_components: []
+  excluded_paths: []
+  analyzed_ranges: []
+  packing_or_unsupported_regions: []
+comparison:
+  match_criteria: []
+  normalization: []
+  matches: [] # Entries: left, right, evidence, confidence, checked_instructions
+  ambiguous: []
+  unmatched: []
+  split_merged_or_inlined_candidates: []
+inventory:
+  output_format: null
+  components: [] # Entries: identity, version, evidence_paths, confidence
+  unidentified_files: []
+  static_library_candidates: []
+leads:
+  capability_matches: []
+  recovered_strings: [] # Entries retain category, encoding, origin, and location
+  confirmed: []
+  rejected: []
+  unresolved: []
+result:
+  outcome: unobserved
+  completeness: unknown
+  raw_outputs: []
+  independent_checks: []
+  limitations: []

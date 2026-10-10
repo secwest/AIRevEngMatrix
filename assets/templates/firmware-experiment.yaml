@@ -1,0 +1,48 @@
+schema_version: 1
+kind: firmware_experiment
+record_state: draft
+question: null
+target:
+  image: null
+  sha256: null
+  architecture_and_mode: null
+  endianness: null
+  abi: null
+  entry_coordinate: null
+  entry_address: null
+environment:
+  engine: null
+  version: null
+  platform_description: null
+  platform_sha256: null
+  rootfs_or_libraries: []
+  memory_ranges: [] # Entries: start, end_exclusive, permissions, source, source_offset
+  initial_registers: {}
+  stack_and_heap: null
+  interrupts_timers_dma: []
+  required_peripherals: []
+  stubs: [] # Entries: location, behavior, state, evidence, dependent_claims
+  filesystem_exposure: []
+  network_exposure: null
+experiment:
+  input_path: null
+  input_sha256: null
+  input_delivery: null
+  completion_condition: null
+  reset_and_snapshot_scope: null
+  argv: []
+  wall_seconds: null
+  instruction_limit: null
+  event_limit: null
+observations:
+  requested: []
+  raw_captures: []
+  unsupported_accesses: []
+checks:
+  repeat_from_initial_state: unobserved
+  known_fixture_match: unobserved
+  hardware_comparison: unobserved
+result:
+  outcome: unobserved
+  conditional_findings: []
+  model_gaps: []

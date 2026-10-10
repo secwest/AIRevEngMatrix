@@ -1,0 +1,47 @@
+schema_version: 1
+kind: firmware_acquisition
+record_state: draft
+method: null # flash_chip_read, debug_memory_read, or another named method
+target:
+  device_id: null
+  board_revision: null
+  chip_markings: null
+  capacity_bytes: null
+  protection_state: unknown
+connection:
+  programmer_or_probe: null
+  probe_uid: null
+  target_part_or_pack: null
+  voltage: null
+  power_source: null
+  interface_and_pin_map: null
+  bus_ownership: null
+  attach_halt_reset_effects: null
+engine:
+  name: null
+  version: null
+  argv: []
+region:
+  coordinate_kind: null # chip_offset, physical, or mapped_virtual
+  start: null
+  end_exclusive: null
+  aliases_or_remapping: []
+  side_effectful_ranges: []
+raw_flash_geometry:
+  page_bytes: null
+  oob_bytes: null
+  erase_block_bytes: null
+  ecc_and_bad_block_handling: null
+reads: [] # Entries: time_utc, path, sha256, byte_count, errors, observed_effects
+verification:
+  expected_size: null
+  repeated_reads_equal: null
+  differing_ranges: []
+  known_header_or_vector_check: null
+  protected_or_unread_ranges: []
+result:
+  outcome: unobserved
+  completeness: unknown
+  original_artifacts: []
+  transformations: []
+  limitations: []

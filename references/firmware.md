@@ -82,6 +82,8 @@ For update or integrity questions, trace capsule acceptance, firmware-management
 
 ## Runtime observation
 
+For concrete Renode/Qiling experiments, flashrom/pyOCD acquisition, and sigrok/cantools signal analysis, see [Firmware execution, acquisition, and signals](firmware-lab.md). That guide includes [reusable experiment and acquisition records](templates.md). [Testing and constraints](testing-and-constraints.md) covers bounded harnesses, fuzzing, and concrete replay of symbolic inputs.
+
 Static extraction should not launch firmware. When runtime evidence matters, select the lightest adequate method: existing logs, isolated user-mode execution of one binary, system emulation with a supported board, a peripheral-aware harness, or authorized hardware observation. QEMU loading bytes is not the same as emulating the actual board; CPU, memory layout, flash, interrupts, peripherals, and boot ROM behavior must match the claim being tested. Record emulator version, machine model, loaded ranges, stubs, network exposure, and capture window. Keep emulated networks isolated unless the requested test requires a defined connection.
 
 [QEMU user-mode emulation](https://www.qemu.org/docs/master/user/main.html) translates target system calls to the host; it does not supply the original kernel or board. Its loader/library environment and host isolation therefore matter to both behavior and containment. A stubbed NVRAM call or peripheral read can make execution progress, but any finding that depends on that stub remains conditional.

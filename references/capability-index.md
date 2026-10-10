@@ -63,6 +63,41 @@ The [operation catalogue](operation-catalog.md) decomposes these outcomes into i
 | Check a reconstruction | Original fixture/capture, rebuilt target and comparator | Passing, failing, missing and incomparable cases | Run same cases with declared normalization | [Process/comparison](process-and-reconstruction.md) |
 | Explain a cross-layer feature | Relevant static and runtime analyzers | User-visible path through UI, code, IPC, native or network layers | Verify each boundary with identity and source location | [Process/comparison](process-and-reconstruction.md) |
 
+## Firmware experiments and hardware
+
+| Analysis question | Starting components | Result | Check | Method |
+| --- | --- | --- | --- | --- |
+| Acquire supported flash or MCU memory | flashrom or pyOCD with matching programmer/probe | Original dumps, target/connection record and acquisition gaps | Compare repeated reads and expected ranges; record attach/reset effects | [Firmware lab](firmware-lab.md) |
+| Reproduce firmware behavior with modeled dependencies | Renode or Qiling with a compatible environment | Minimal harness, traces, substitutions and model gaps | Repeat from defined state and compare a fixture or hardware trace | [Firmware lab](firmware-lab.md) |
+| Decode hardware signals | sigrok/PulseView or sigrok-cli and supported instrument/decoder | Raw capture plus transactions linked to samples | Check decoded fields against raw edges and known device state | [Firmware lab](firmware-lab.md) |
+| Interpret CAN traffic | cantools, capture and identified database | Frame/signal records, scaling and field hypotheses | Check frame flags, multiplexing, raw bytes and independent known states | [Firmware lab](firmware-lab.md) |
+
+## Systematic testing and constraints
+
+| Analysis question | Starting components | Result | Check | Method |
+| --- | --- | --- | --- | --- |
+| Find and reproduce parser/runtime failures | AFL++ plus compatible instrumentation and a resettable harness | Corpus, campaign scope and replayable failures | Confirm target coverage, baseline behavior and minimized-case replay | [Testing](testing-and-constraints.md) |
+| Test stateful protocol handling | boofuzz plus session/reset/monitor model | Message sequences, failure classifications and reproducers | Reestablish baseline and replay the complete prerequisite sequence | [Testing](testing-and-constraints.md) |
+| Find an input satisfying a code-path condition | angr plus explicit initial state and finite constraints | Witness or scoped unsat/exhausted/timeout outcome | Replay witness on concrete target and check the decisive branch | [Constraints](testing-and-constraints.md) |
+| Explain input influence along execution | Triton with a concrete driver and taint policy | Source-to-sink dependencies anchored to instructions | Change a selected source byte and check the predicted effect | [Constraints](testing-and-constraints.md) |
+
+## Additional formats and runtime artifacts
+
+| Analysis question | Starting components | Result | Check | Method |
+| --- | --- | --- | --- | --- |
+| Recover a proprietary binary format | Byte map, samples and Kaitai Struct | Format specification and bounded parser | Known fields, malformed lengths, truncation and exact-consumption fixtures | [Formats](formats-and-runtimes.md) |
+| Inspect WebAssembly modules or components | wasm-tools and embedding application context | Validated structure, instruction/interface records and host boundaries | Record enabled features and check function indices/import bindings | [Runtimes](formats-and-runtimes.md) |
+| Explain a JVM class or JAR feature | Class/archive inventory and Vineflower | Descriptor-anchored methods, reconstructed code and dynamic gaps | Check decisive bytecode and selected runtime class variant | [Runtimes](formats-and-runtimes.md) |
+| Inspect Python bytecode | Container extractor where needed and xdis | Version-qualified instructions and code-object relationships | Match magic/version and preserve bytecode offsets; do not import modules | [Runtimes](formats-and-runtimes.md) |
+| Recover Go runtime metadata | GoReSym and native analyzer | Available names, types, source mappings and function ranges | Check representative boundaries and load-address translation | [Runtimes](formats-and-runtimes.md) |
+| Match functions across builds | Diaphora and compatible IDA exports | Matches, changes, ambiguous and unmatched functions | Inspect decisive instructions on both sides; preserve heuristic uncertainty | [Matching](matching-and-runtime-artifacts.md) |
+| Inventory firmware/software components | Syft over identified extracted tree or supported image | Scoped inventory/SBOM with evidence paths | Check representative identities; preserve unrecognized/static code | [Inventory](matching-and-runtime-artifacts.md) |
+| Find capability and decoded-string leads | capa and/or FLOSS on supported inputs | Located candidates with rule/extraction provenance | Inspect decisive code/decoding and record coverage warnings | [Discovery](matching-and-runtime-artifacts.md) |
+| Explain runtime state from system memory | Volatility 3 with compatible layers/symbols | Selected process/module/memory artifacts | Check build/symbol identity and decisive raw structures | [Memory](matching-and-runtime-artifacts.md) |
+| Find the earlier event causing a process failure | rr on a supported Linux host and debugger | Replayable recording and causal event explanation | Replay a known event and preserve trace dependencies | [Replay](matching-and-runtime-artifacts.md) |
+
 ## Supporting structures
 
 A one-off result can consist of the finding and decisive source locations. [Graph and evidence conventions](evidence-and-runtime.md) support results combined across versions or layers, exported for audit, queried repeatedly, or tracked as reconstruction obligations. A graph, evidence bundle, or session service supports the finding; it does not replace it.
+
+[Analysis templates](templates.md) provide optional working records for these workflows and a concise result format. They distinguish planned procedures from recorded observations.

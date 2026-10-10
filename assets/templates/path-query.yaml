@@ -1,0 +1,49 @@
+schema_version: 1
+kind: path_query
+record_state: draft
+question: null
+mode: null # symbolic_path, dynamic_taint, or constrained_trace
+target:
+  path: null
+  sha256: null
+  architecture_and_mode: null
+  abi: null
+  coordinate_kind: null
+  image_base: null
+  load_base: null
+  entry_address: null
+engine:
+  name: null
+  version: null
+  driver_or_query_source: null
+state:
+  initialization_method: null
+  concrete_registers: {}
+  concrete_memory_and_files: []
+  symbolic_inputs: [] # Entries: identity, byte_range, width, constraints
+  external_summaries: []
+  uninitialized_or_unconstrained_values: []
+goal:
+  predicate: null
+  excluded_states: []
+taint:
+  sources: []
+  sinks: []
+  alias_and_control_dependence_policy: null
+  concrete_trace_identity: null
+limits:
+  wall_seconds: null
+  steps: null
+  active_states: null
+  loop_bound: null
+  solver_timeout_ms: null
+result:
+  outcome: unobserved # witness, unsat_within_model, exhausted, timeout, unsupported
+  witness_inputs: []
+  constraints_artifact: null
+  dependency_trace: null
+  errored_or_unexplored_states: []
+  replay_command_argv: []
+  concrete_replay: unobserved
+  decisive_observation: null
+  limitations: []

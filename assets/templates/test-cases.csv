@@ -1,0 +1,4 @@
+case_id,purpose,input_path,input_sha256,initial_state,expected_observation,observation_scope,reset_procedure,actual_artifact,outcome,limitations
+normal,Known accepted input,,,,,,,,unobserved,
+malformed,Known rejected input,,,,,,,,unobserved,
+repeat,Repeat normal case from the same state,,,,,,,,unobserved,

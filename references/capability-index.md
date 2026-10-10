@@ -2,6 +2,8 @@
 
 Each row maps an analysis question to a starting toolkit, expected output, and a check that can falsify an incorrect result. The named tools are examples, not prerequisites or evidence that an engine is installed. Additional components address gaps left by the initial analysis.
 
+The [operation catalogue](operation-catalog.md) decomposes these outcomes into individual primitives, including navigation, annotations, device mutations, execution coverage, lifecycle operations, and record management.
+
 ## Static artifacts and code
 
 | Analysis question | Starting components | Result | Check | Method |

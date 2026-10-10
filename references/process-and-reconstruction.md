@@ -10,6 +10,10 @@ Before launch, hash executable and declared inputs and snapshot selected paths. 
 
 Compare two captures by scenario version, target identity and environment first. Then align terminal events, exit state, filesystem effects and optional traces. Mark nondeterministic fields such as timestamps, PIDs and generated IDs explicitly, with normalization rules declared before diffing. Return equal, different, missing and uncomparable observations. No output difference under one scenario proves only that scenario's observations agreed.
 
+Structured scenarios retain stable step/event IDs and raw journals alongside rendered terminal state. Screen contents alone can lose overwritten output and do not reconstruct interaction order. Terminal dimensions, scrollback and resize operations share a bounded cell budget. Optional command shims or HTTP/WebSocket instrumentation declare their interception scope and preserve separate provenance; uninstrumented effects remain unknown.
+
+An order-sensitive comparison can check a declared partial order or finite accepted trace language. It verifies required events, forbidden transitions and permitted interleavings against the captured journal. Timestamp proximity or sorting cannot infer causality or concurrency. Missing, truncated or journal-free input makes the affected check incomplete rather than equivalent.
+
 ## Protocol behavior and remote observability
 
 For a protocol result, start from an authorized capture or test endpoint. Preserve raw messages, direction, transport, endpoint identity and timing. Determine framing before decoding fields; separate wire bytes from inferred field names. Vary one controlled input at a time to test length fields, ordering, state transitions, error behavior and version negotiation. A parser should reject malformed lengths and truncated frames explicitly. Do not infer encrypted payload contents from metadata alone.

@@ -24,6 +24,12 @@ Start at concrete entry points and parse only reachable files, then expand when 
 
 An ASAR inventory includes entries marked as unpacked and their companion files, commonly under `app.asar.unpacked`. Missing external files make acquisition partial. Format-defined shared member spans are valid when their indexed lengths and contents agree; overlapping ranges alone do not establish corruption. The [ASAR format and tooling](https://github.com/electron/asar) describe external members and shared storage.
 
+## Semantic and export-shape comparison
+
+Static value queries track the selected binding through assignments, direct arguments/parameters, returns, and lexical captures using scope-aware identities. Unknown aliases, computed properties, dynamic imports and reflective calls remain unresolved. Every dependency carries its source span and relation type; a lexical capture does not prove when a closure executes.
+
+Export-shape comparison starts with an exact module/export selector on each side and enumerates supported static return variants. Each property records presence separately from whether its value can be resolved. Variant pairing requires a unique supported discriminator or an explicit reviewed mapping; arbitrary array order is insufficient. A property is absent only when its parent shape has complete coverage. The result gives property-path changes, source spans, unmatched variants and dynamic/unknown values. It establishes static shape differences; observed return values need a separate runtime check.
+
 ## Source-map accuracy
 
 Mappings depend on the exact generated text, map URL, `sourceRoot`, source entries, and indexed-map sections where present. A map can supply locations while omitting original text; missing `sourcesContent` does not establish that source files are available. Referenced URLs or paths are untrusted locations and are resolved only within the investigation's acquisition scope. A stale map or a merely similar bundle does not establish an identity match.
@@ -35,6 +41,18 @@ The [source-map specification](https://tc39.es/ecma426/) uses UTF-16 code units 
 Passive capture attaches to an existing user-owned target. It should not navigate, click, type, or run page code as part of observation. Chrome's CDP can collect network and console data only after the relevant domains are enabled; record the gap. Response bodies may be unavailable after detach or because the browser did not retain them. A page may make ordinary network requests after attachment. Treat captured storage contents and bodies as potentially sensitive; collect only fields needed for the question.
 
 An active scenario is separate. Prefer a fresh browser context for reproducibility. Explicitly choose whether service workers are blocked or allowed, whether cookies/storage are seeded, and whether the browser is headless. Observe redirects and target closure. Verify the final state with an assertion, not only a screenshot. Use a fixture for first-run validation before targeting a live service.
+
+## Instrumented execution and listener inspection
+
+Precise execution coverage is an instrumented mode with an explicit arm/start/stop sequence. The capture records script identity and text digest, nested function/block ranges, counts, coordinate units, and the interval during which counters were active. Enabling instrumentation can reset counters or affect optimization. Navigation, worker attachment and script replacement determine coverage boundaries. Counts apply to that capture and do not establish which user action caused execution. Teardown stops owned instrumentation and releases the transport while preserving an externally owned page.
+
+Listener inspection binds a selector to an exact document and states its match policy. It returns directly registered listener flags, callback/script location and available source identity. Delegated ancestor listeners, framework dispatch and execution history require separate evidence. Inspection does not dispatch the event. Temporary remote object handles are released after capture.
+
+## Owned Electron scenarios
+
+An Electron scenario records executable/package identity, launch environment, process ownership, and stable window/WebContents selectors before applying actions. A trusted capture harness can subscribe to main-process, window, preload, session, navigation and IPC metadata, with each available event family declared. A renderer-only connection cannot supply all those facts.
+
+Actions can include clicks and waits, targeted renderer reload/crash, and synthetic open-url or second-instance delivery when the selected harness supports them. Synthetic delivery is labeled separately from an actual operating-system event. External navigation, shell launches, downloads, permissions and updater effects have an explicit allow/block policy and observable outcomes. Instrumentation and blocking can alter behavior; payload values are collected only when the question needs them. Cancellation stops owned work, attempts process-tree cleanup and preserves collected observations if cleanup fails.
 
 ## Runtime reconciliation
 

@@ -24,6 +24,24 @@ For one instruction, return exact address, bytes, mnemonic, ordered operands, co
 
 An Objective-C message send can resolve to multiple implementations. Recover receiver type constraints, selector, category/class metadata, and inheritance before naming a target. Swift demangling is a naming aid; verify type ownership in metadata or code. For native UI action tracing, join interface-builder outlet/action wiring, accessibility identifiers, runtime event, and selector/function evidence where available. Report which link is inferred.
 
+Function-body ranges and their endpoint conventions are explicit. A function can have disjoint ranges, so enclosing span and body byte count differ. API/dispatch analysis retains jump-table data locations, index transformations, case-to-target associations, and a separately evidenced default branch. An unresolved case value does not establish the default.
+
+## Navigation and annotation operations
+
+Navigation queries read the selected document, cursor, containing procedure, bookmarks, and adjacent analyzed objects. A requested destination can snap to an object's start; the returned coordinate records what actually happened. Headless workflows use explicit addresses. Function containment comes from analyzed body ranges, not proximity to a symbol. Search preserves literal queries unless regex is requested, and regex work has a cancellation deadline.
+
+Annotation edits have an explicit database and persistence scope. A rename or comment update validates the selected address, engine constraints, and name ownership before writing, then reads back the result. Empty text clears only the selected comment channel. Batch renames define how selected names may move or swap and return per-item outcomes. A grouped function rename/comment edit uses an engine transaction when available; otherwise the adapter cannot claim atomicity and must retain enough prior state to report or undo partial changes. Bookmarks are navigation metadata. Annotation changes never establish a modification to the original executable bytes.
+
+## Native UI scenarios
+
+A scenario binds the artifact to an exact process and window, records a baseline accessibility tree or screenshot, and applies named steps to uniquely selected elements. Typical steps are press, increment/decrement, text entry, and bounded waits. Each step records the selected element, before/after state, action error and capture error independently. Window replacement or process exit invalidates the old selection instead of silently widening it. The result states which app effects were observable, which permissions were available, and whether any restoration was requested and achieved.
+
+Call observation separately declares launch or attach mode, owned processes, selected breakpoints, ABI, event/time limits and cleanup. Function-entry register values require ABI-aware interpretation before being called arguments. Unresolved breakpoints, attach gaps and lost hits remain explicit; debugger cleanup applies only to the declared ownership scope.
+
+## Structured Apple resources
+
+A keyed-archive parser preserves the original object table, UID references, class descriptors and named roots. Shared references and cycles require stable object IDs and a visited set; deserializing into live platform objects can execute behavior and is unnecessary for static inspection. Compiled UI connection graphs retain outlet/action IDs and unresolved classes. Asset catalog metadata identifies catalogs and renditions but does not establish that rendition bytes were extracted. Loader resolution uses the executable root, loader location, architecture and ordered rpath context for each process; out-of-scope system paths stay unresolved until matching evidence is supplied.
+
 ## Extraction and layout details
 
 For Mach-O fat binaries, parse the fat table and keep `slice_offset`, `slice_size`, CPU type/subtype and the thin Mach-O's own coordinates. A section's original-file offset equals slice offset plus thin-section offset only when that range is validated in the original file. PE resource trees, .NET directories and overlay bytes need their own bounds checks. Archive extraction should not follow paths outside the chosen output directory; output filenames may need collision-safe normalization while preserving original member names in metadata.

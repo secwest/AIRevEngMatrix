@@ -42,13 +42,15 @@ These branches are choices. A file-format question can finish without a debugger
 | EVM bytecode | Which dispatch branches, selectors, events, and storage accesses are visible? | Instruction-anchored interface candidates and unresolved ABI details |
 | Releases and reconstructions | What changed? Does a replacement reproduce the required behavior? | Matched and unmatched changes; passing, failing, missing, and incomparable cases |
 
-The [capability matrix](references/capability-index.md) maps individual questions to methods, outputs, and checks.
+The [capability matrix](references/capability-index.md) maps individual questions to methods, outputs, and checks. The [operation catalogue](references/operation-catalog.md) lists the individual analysis primitives behind those results, with inputs, outputs, and validation requirements.
 
 ## Tool taxonomy
 
 Tools have different roles. A **parser** reads a file's structure; a **disassembler** decodes instructions; a **decompiler** proposes higher-level code; a **debugger or tracer** records execution; an **emulator** runs code against a modeled environment. An **adapter** is the small amount of glue needed to select inputs, invoke an engine, preserve locations, and return a usable result.
 
 The tools below are candidates described by the methods. Inclusion does not mean they are bundled, installed, interchangeable, or supported for every target. Libraries and CLIs can be used directly; a new adapter is useful only when the requested result needs one.
+
+This taxonomy groups engines and interfaces by role. For individual operations such as function inspection, browser execution coverage, device package installation, or evidence revision, the [operation catalogue](references/operation-catalog.md) provides the more detailed specification. Related operations share a row where their implementation and checks are similar. Documented scope and verified executable behavior are separate properties.
 
 ### Files, code, and application packages
 
@@ -109,6 +111,7 @@ The repository root is a skill directory. It can be installed under the name `re
 | --- | --- |
 | [SKILL.md](SKILL.md) | Skill entrypoint and routing |
 | [Capability matrix](references/capability-index.md) | Analysis questions, expected results, and checks |
+| [Operation catalogue](references/operation-catalog.md) | Individual operation selectors, inputs, outputs, and validation requirements |
 | [Toolkit assembly](references/assembly-patterns.md) | Tool selection and adapter design |
 | [Native artifacts](references/native-and-artifacts.md) | Native code, Apple bundles, crashes, and EVM |
 | [JavaScript and web](references/javascript-and-web.md) | Shipped source, Electron, browser capture, and scenarios |

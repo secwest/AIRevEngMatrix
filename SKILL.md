@@ -5,7 +5,7 @@ description: Assemble and use a minimal reverse-engineering toolkit for a specif
 
 # Build a task-specific reverse-engineering toolkit
 
-Start with the result the user wants: a function explanation, recovered source, observed behavior, extracted artifact, protocol description, version difference, or verification outcome. Select and build only the analysis components needed to produce that result. The [capability matrix](references/capability-index.md) maps common questions to methods, outputs, checks, and focused implementation recipes. It is a selection guide, not a fixed tool API.
+Start with the result the user wants: a function explanation, recovered source, observed behavior, extracted artifact, protocol description, version difference, or verification outcome. Select and build only the analysis components needed to produce that result. The [capability matrix](references/capability-index.md) maps common questions to methods, outputs, checks, and focused implementation recipes. Use the relevant section of the [operation catalogue](references/operation-catalog.md) when an individual primitive needs an explicit input, output, or check. These are selection guides and specifications, not installed tool APIs.
 
 ## Workflow
 

@@ -29,11 +29,23 @@ The schema above is illustrative. A portable implementation defines the canonica
 
 An unknown ledger records ID, question, affected claim, reason, evidence needed to resolve it, status, and resolution evidence. Status moves to resolved only when new evidence explicitly answers the question; deleting or renaming an unknown does not resolve it.
 
+For concurrent or resumed investigations, each unknown has an immutable revision chain and an explicit current revision. Updates supply the expected revision and fail on a stale value. Evidence and relationship references are validated before appending a new revision. Resolution checks use the current head and its supporting evidence, authority, environment and coverage requirements. Withdrawal or exclusion records a scope decision, not proof that the question was answered. Queries expose all matching current heads with deterministic ordering and declared pagination.
+
 Repeated queries over a completed analysis use one stored result and bounded deterministic views: summary, binary layout sections/symbols/mitigations/linkage, JavaScript modules/assets, or native procedure/pseudocode/assembly/blocks/references. Each view names its parent result ID, selector, offset and limit, and returns a digest of the selected material. A view does not rerun analysis or imply that an omitted page is absent. Stable node IDs disambiguate paths.
 
 ## Provider interface
 
 The optional adapter shape is described in [toolkit assembly](assembly-patterns.md). Results can include raw output references and typed errors: `invalid_input`, `unsupported_target`, `capability_unavailable`, `permission_denied`, `timeout`, `partial_capture`, `artifact_changed`, `producer_failed`. Availability is separate from advertised capability. A session registry is useful when stateful engines are needed; sessions identify the exact artifact digest and provider instance. Results from a stale session retain their original artifact identity instead of being relabeled as analysis of a changed file.
+
+## Session and bundle transactions
+
+A stateful analysis session binds a target digest, engine identity, analysis profile, and optional mutable annotations. Opening the same compatible target can reuse its database; changing the target, engine or profile requires an explicit transition. A status query reports current state and capability availability without starting new analysis.
+
+Close waits for earlier owned operations, blocks conflicting new work, and saves a requested snapshot before releasing resources. A failed save preserves the usable session and reports the failure. Snapshots declare their target, engine/profile compatibility, annotation policy and schema; incompatible state is rejected rather than relabeled. Temporary and persistent analysis databases have distinct lifetimes.
+
+Bundle export writes and verifies a staged file before publishing it at the selected destination. Existing destinations require a defined overwrite policy. Import validates the complete candidate bundle, record IDs, references and collision policy before committing a merge. Same ID with different contents is an error. Partial validation cannot silently import the accepted prefix. An in-memory bundle read identifies the state or revision it observed.
+
+Bundle comparison reports exact record membership first, then only explicitly paired observations and revision chains. An absent record indicates omission from that bundle. It does not establish that the underlying event or code was absent. Matching content hashes establish byte agreement within the compared scope, independently of a producer-authenticity claim.
 
 Command adapters use argument vectors without shell interpolation and record executable path and version, working directory, selected environment overrides, exit code, bounded stdout/stderr, and timeout. Parser limits cover input size, recursion, decompression ratio, object count, and output volume. Execution of untrusted code requires runtime evidence and authorization; a temp directory and resource limits are not a security sandbox. Timeout or cancellation cleanup includes owned child processes and temporary files, with any failure recorded.
 

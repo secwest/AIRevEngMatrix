@@ -29,6 +29,8 @@ Acquisition: query package paths, pull each split/base APK or requested file, ha
 
 State-changing adapters are separate: push file, install/uninstall package, start app/activity, stop app, and setting changes. Their effects depend on authorization and device controls. `adb shell pm` quoting differs from host shell escaping. Postconditions include installed version or process state; partial changes remain visible in the result.
 
+An install operation identifies the complete selected APK/split set, user/profile and replacement options before invocation; incompatible or missing splits remain explicit failures. Uninstall reports the requested data-retention semantics and observed package state. File push specifies the destination and overwrite behavior and verifies available remote metadata or digest after transfer. Launch/stop operations distinguish a package launcher action from a named activity/intent and verify available process/activity state. A successful transport command and a verified application-level postcondition are separate results.
+
 ## JEB integration
 
 JEB is a licensed analysis engine with its own client, project and item identities. Its integration probes the client/version, opens an existing project or import through the documented API, enumerates units, and retains item IDs and raw decompiler output. JADX and other engines may answer a generic code question, but their output does not support a JEB-specific claim.

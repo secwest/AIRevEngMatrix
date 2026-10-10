@@ -1,0 +1,14 @@
+# Generated analysis output
+output/
+runs/
+artifacts/
+*.log
+
+# Local runtimes and caches
+.venv/
+venv/
+node_modules/
+__pycache__/
+.pytest_cache/
+.DS_Store
+Thumbs.db

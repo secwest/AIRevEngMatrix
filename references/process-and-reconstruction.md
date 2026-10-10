@@ -1,6 +1,6 @@
-# Process, comparison, and reconstruction build recipes
+# Process behavior, comparison, and reconstruction
 
-These workflows produce run comparisons, changed-behavior findings and reconstruction verification results. Read [the graph and evidence conventions](evidence-and-runtime.md) when the result needs formal provenance or repeated cross-layer joins. A joined graph or passing test cannot strengthen weak or missing source evidence by itself.
+These processes produce run comparisons, changed-behavior findings and reconstruction verification results. Formal provenance and repeated cross-layer joins follow [the graph and evidence conventions](evidence-and-runtime.md). A joined graph or passing test cannot strengthen weak or missing source evidence by itself.
 
 ## Process scenario harness
 
@@ -24,13 +24,13 @@ A changed-behavior finding is a synthesis: choose a user-visible feature or exte
 
 ## Feature explanations and static/runtime correlation
 
-Deliver an explained feature path or behavior finding. Internally, typed nodes can represent artifacts, processes, modules, functions/methods, UI elements, routes, IPC channels, endpoints, device components and observations. An edge should retain source location, authority and version scope. Graph projections from Apple, Android, managed and JavaScript analysis are optional ingest adapters. Bounded path searches should explain each supported step; do not invent missing links.
+A feature explanation contains a supported path or behavior finding. Typed nodes may represent artifacts, processes, modules, functions/methods, UI elements, routes, IPC channels, endpoints, device components and observations. An edge retains source location, authority and version scope. Graph projections from Apple, Android, managed and JavaScript analysis are optional ingest adapters. Bounded path searches expose the support for each step and leave missing links unresolved.
 
 To correlate static and runtime evidence, require a matching module/package/bundle digest or build ID, plus a mapping from runtime address/script ID/token to a static location. When runtime identity cannot be proven, label the correlation tentative. Retain the observed event and static candidate as separate records.
 
 ## Reconstruction verification
 
-Deliver a coverage and parity finding against concrete claims: API/entry point, input schema or domain type, side effect, error case, UI interaction, persistence rule, or scenario outcome. When there are many claims, track them in an obligation ledger with source, required fixtures/cases, owner, dependencies, status and verifier. Static findings create candidate obligations; they cannot alone close runtime obligations. Allow analyst-reviewed additions and exclusions with recorded reasons.
+A coverage and parity finding is measured against concrete claims: API/entry point, input schema or domain type, side effect, error case, UI interaction, persistence rule, or scenario outcome. A large claim set can be tracked in an obligation ledger with source, required fixtures/cases, owner, dependencies, status and verifier. Static findings create candidate obligations; they cannot alone close runtime obligations. Analyst-reviewed additions and exclusions carry recorded reasons.
 
 A reconstruction manifest binds each obligation to exactly one implementation owner and any required type/schema. A verifier has its own result, exact case IDs, reconstruction build identity, authority and raw output. Closure requires all required cases to pass under comparable authority; unresolved unknowns, duplicate owners, contradictions, missing dependencies or uncomparable environments keep an obligation open. Do not compute a single coverage percentage that hides required open obligations; report counts by required/optional, authority and status.
 

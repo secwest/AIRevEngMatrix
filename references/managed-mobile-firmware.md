@@ -1,6 +1,6 @@
-# Managed code and mobile device build recipes
+# Managed code and mobile devices
 
-Build only what the requested result needs. Use [graph and evidence conventions](evidence-and-runtime.md) when formal cross-layer joins or portable provenance are needed. An engine listed here is a candidate dependency; probe the installed version and API. Do not present an adapter specification as evidence that a licensed engine or device exists.
+Managed-code and mobile analysis depend on the available assemblies, packages, devices, and analysis engines. [Graph and evidence conventions](evidence-and-runtime.md) apply to formal cross-layer joins and portable provenance. An engine named here is a candidate dependency; an adapter specification does not establish that a licensed engine or device exists.
 
 ## .NET assemblies
 
@@ -25,11 +25,11 @@ Probe `adb version` before device access. Select a device by explicit serial and
 
 Acquisition: query package paths, pull each split/base APK or requested file, hash local bytes, and record remote path/size when available. Screenshot capture uses `exec-out screencap -p` or documented equivalent and records dimensions/hash. Bugreports and logs can contain secrets; select and redact appropriately.
 
-State-changing adapters are separate: push file, install/uninstall package, start app/activity, stop app, change settings if explicitly requested. Describe target effect and use the user's authorization and device controls. Do not conflate `adb shell pm` quoting with host shell escaping. Verify postconditions such as installed version or process state and report partial changes.
+State-changing adapters are separate: push file, install/uninstall package, start app/activity, stop app, and setting changes. Their effects depend on authorization and device controls. `adb shell pm` quoting differs from host shell escaping. Postconditions include installed version or process state; partial changes remain visible in the result.
 
 ## JEB integration
 
-JEB is a licensed, running producer, not something the skill can reproduce. If available, probe its client/version, open an existing project or import with its documented API, enumerate units, decompile selected items, and retain JEB item IDs and raw output. Do not silently fall back from JEB-specific claims to JADX or another engine. A generic question may use another available engine if it supports the needed fact; a JEB-specific request requires JEB.
+JEB is a licensed analysis engine with its own client, project and item identities. Its integration probes the client/version, opens an existing project or import through the documented API, enumerates units, and retains item IDs and raw decompiler output. JADX and other engines may answer a generic code question, but their output does not support a JEB-specific claim.
 
 ## Acceptance examples
 

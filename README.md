@@ -1,37 +1,37 @@
 # AIRevEngMatrix
 
-A result-first reverse-engineering skill. It helps an agent assemble a small toolkit for a specific investigation from installed analyzers, parsers, debuggers, browser/device APIs, and short task-specific adapters.
+AIRevEngMatrix describes result-focused reverse engineering with a small, task-specific toolkit. Its components come from installed analyzers, parsers, debuggers, browser/device APIs, and narrow adapters.
 
-The deliverable is the finding: for example, a function explanation, recovered source, extracted firmware region, observed interaction, protocol description, version difference, or reconstruction check. The skill does not require a standing server or a fixed catalog of tool calls.
+The outputs are findings such as a function explanation, recovered source, extracted firmware region, observed interaction, protocol description, version difference, or reconstruction check. The method requires neither a standing server nor a fixed catalog of tool calls.
 
 ## Contents
 
-- [SKILL.md](SKILL.md): entrypoint and operating rules.
-- [Result capability matrix](references/capability-index.md): questions, minimal methods, outputs and checks.
-- [Assembly patterns](references/assembly-patterns.md): how to select and build only the needed components.
-- [Native and artifact recipes](references/native-and-artifacts.md).
-- [JavaScript and web recipes](references/javascript-and-web.md).
-- [Managed and mobile recipes](references/managed-mobile-firmware.md).
-- [Firmware recipes](references/firmware.md): image mapping, boot chains, embedded Linux, MCU/RTOS and UEFI code, update logic, and controlled execution.
-- [Process, protocol and comparison recipes](references/process-and-reconstruction.md).
-- [Optional graph and evidence conventions](references/evidence-and-runtime.md).
+- [SKILL.md](SKILL.md): the skill entrypoint.
+- [Result capability matrix](references/capability-index.md): questions, methods, outputs and checks.
+- [Toolkit assembly](references/assembly-patterns.md): component selection and interfaces.
+- [Native artifacts](references/native-and-artifacts.md).
+- [JavaScript and web](references/javascript-and-web.md).
+- [Managed code and mobile devices](references/managed-mobile-firmware.md).
+- [Firmware](references/firmware.md): image mapping, boot chains, embedded Linux, MCU/RTOS and UEFI code, update logic, and controlled execution.
+- [Process, protocol and comparison](references/process-and-reconstruction.md).
+- [Graph and evidence conventions](references/evidence-and-runtime.md).
 
 ## Use
 
-Install this directory as a skill named `reverse-engineer-direct` in an agent's skills directory, or give the agent `SKILL.md` and the relevant references. Ask for a concrete result and provide the target artifact, live target or capture. The agent should identify the minimum components, check available engines on its actual host, build the missing adapter if needed, test a fixture or invariant, then return the result with decisive source locations and limitations.
+The directory can be installed as a skill named `reverse-engineer-direct`. An investigation starts with a concrete question and a target artifact, live target, or capture. The work then consists of selecting components, checking available engines, implementing any missing narrow adapter, validating it, and producing a finding with source locations and limitations.
 
-Examples:
+Example investigations:
 
-- “Explain what this native function does and show the call sites that support the conclusion.”
-- “Recover the shipped modules behind this Electron UI action and identify the IPC boundary.”
-- “Compare these two APKs and tell me which externally visible behavior changed.”
-- “From these authorized captures, describe the protocol state transitions and stable remote fingerprints.”
-- “Map this firmware update, identify the code that starts its network service, and show what a remote client could actually observe.”
+- A native function dossier with supporting call sites.
+- An Electron UI action traced through shipped modules and an IPC boundary.
+- An APK release comparison tied to externally visible behavior.
+- Protocol state transitions and stable remote fingerprints from authorized captures.
+- A firmware update map linked to network-service startup and observable responses.
 
 ## Scope
 
-The recipes are specifications, not bundled decompilers or device emulators. Proprietary engines, connected devices, browser sessions and historical runtime events must exist separately. Static interpretation and runtime observation should be reported at their actual level of confidence. Graphs, evidence bundles and ledgers are optional support for investigations that need formal joins, transfer or audit.
+These documents specify analysis methods; they do not bundle decompilers or device emulators. Proprietary engines, connected devices, browser sessions and historical runtime events are separate dependencies. Static interpretation and runtime observation have different evidentiary weight. Graphs, evidence bundles and ledgers support investigations that need formal joins, transfer or audit.
 
-## Validation
+## Result checks
 
-Validate the skill folder with the Codex skill validator when available. For a toolkit built from a recipe, test a known fixture and at least one target-specific invariant. The matrix lists checks for each result family.
+The capability matrix gives a check for each result family. Parser and adapter results also need a known fixture and at least one target-specific invariant, such as a valid offset mapping or a matching extracted-file digest.

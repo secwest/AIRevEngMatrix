@@ -1,15 +1,15 @@
-# Assemble a minimal toolkit
+# Toolkit assembly
 
-The capability index names outcomes. The family recipes specify how to obtain them. This page tells the model how to turn a selected subset into code that can be reviewed and rerun.
+The capability index names outcomes. The family methods describe the analysis components behind those outcomes. A toolkit is the smallest set of components that produces a checkable result for the target.
 
 ## Selection algorithm
 
-For a multi-component task, write a short implementation matrix before coding:
+For a multi-component investigation, the implementation matrix records dependencies and gaps:
 
 | Requested result | Needed fact | Input | Component | Engine/API | Check | Remaining gap |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 
-Choose components as a dependency closure from the requested result, not from a fixed tool catalog. Typical dependency order:
+Components form a dependency chain from the requested result. A typical chain is:
 
 ```text
 input identity + bounded I/O
@@ -18,11 +18,11 @@ input identity + bounded I/O
        -> checked answer or output artifact
 ```
 
-Examples: a PE import question needs an identity check, PE parser and a small report. A browser feature trace may need browser capture, script export and AST relationships. A reconstruction audit needs the relevant analyzers, fixtures and comparison. Use a graph or obligation ledger internally only if it makes the requested result more reliable or reviewable.
+For example, a PE import question needs an identity check, PE parser and a small report. A browser feature trace may need browser capture, script export and AST relationships. A reconstruction audit needs analyzers, fixtures and comparison. Graphs and obligation ledgers are useful when they make the result more reliable or reviewable.
 
 ## Project shape
 
-Use the host language with the best mature API for the selected target. A small Python or TypeScript project can use:
+The host language follows the best mature API for the selected target. A small Python or TypeScript project may have this shape:
 
 ```text
 toolkit/
@@ -32,7 +32,7 @@ toolkit/
   output/                # requested result and enough raw data to verify it
 ```
 
-Do not create empty layers just to match this shape. A one-file script is better for a one-question investigation. Add a manifest, shared model, or run archive when repeated analyses or portable results require them.
+The shape is optional. A one-question investigation may need only one script; repeated analyses or portable results may need a manifest, shared data model, or run archive.
 
 The common interface can be represented as:
 
@@ -42,23 +42,23 @@ analyze(target, request, limits) -> {result, source_locations, limitations, erro
 close() -> cleanup result
 ```
 
-For live connectors add `attach(target_selector)` and `detach()`; for stateful native engines add `open(snapshot)`. The caller owns target selection and authorization. An adapter never silently switches to another engine after a failure because that can change the evidentiary basis of the answer.
+Live connectors add `attach(target_selector)` and `detach()`; stateful native engines add `open(snapshot)`. The caller owns target selection and authorization. An adapter that changes engines after a failure changes the evidentiary basis of the answer, so that transition must be explicit.
 
 ## Engine selection
 
-Prefer a documented installed API to scraping human-oriented text. A CLI with structured JSON output is next. Human text parsing is acceptable when version pinned and verified against fixtures. Implement a direct format parser only for a bounded subset whose rules you can validate; use a mature parser for complex binary formats. Install a large engine only if the requested result needs it and the host allows it. If a requested proprietary engine is missing, mark that capability unavailable rather than silently substituting an engine with different semantics.
+Documented installed APIs provide the strongest interface. Structured CLI output is the next option. Human-readable output is usable when its format is version pinned and verified against fixtures. Direct format parsers are practical for bounded, validated subsets; complex binary formats usually need mature parsers. A missing proprietary engine leaves its capability unavailable unless another engine's distinct semantics are stated.
 
-When a dependency must be installed, choose an official or trusted package source, pin the version, record license and digest when possible, and follow user/host permission rules. A model may write its own adapter code; it should not claim to have implemented a full decompiler, JEB, browser, emulator, debugger or native sandbox from a short prompt.
+Dependency records include source, version, license and digest when available; installation remains subject to host permissions. A narrow adapter can connect existing engines, but it is not a substitute for a full decompiler, JEB, browser, emulator, debugger or native sandbox.
 
 ## Build sequence
 
-1. **Intake:** validate paths/URLs, identify format, hash original bytes, snapshot mutable inputs. Test malformed and oversize input.
-2. **Primitive:** call one parser or engine; retain the output needed to check the claim. Normalize only fields needed by the requested result.
-3. **Composition:** add a trace, diff or verifier only when the result requires it. Check coordinate and identity matches before joining facts.
-4. **Run:** execute on the selected target, inspect at least one raw result, and compare with an independent signal where feasible.
-5. **Deliver:** show the answer, recovered artifact, comparison or verification finding first. Include concise provenance and limitations. Use [graph and evidence documentation](evidence-and-runtime.md) if the result must be audited, transported or extended across several components.
+1. **Intake:** path/URL validation, format identification, original-byte hash, and snapshot of mutable inputs; malformed and oversize inputs are test cases.
+2. **Primitive:** one parser or engine produces raw output and the fields needed to check the claim.
+3. **Composition:** a trace, diff, or verifier joins facts after coordinate and identity matches are checked.
+4. **Run:** the selected target yields raw results and, where feasible, an independent comparison signal.
+5. **Result:** the answer, recovered artifact, comparison, or verification finding carries concise provenance and limitations. [Graph and evidence conventions](evidence-and-runtime.md) support results that must be audited, transported, or extended across components.
 
-Stopping condition: the requested claim is supported at the required authority, or the remaining gap is named precisely. Do not build extra providers to improve the catalog count.
+The process ends when the claim has enough support for its intended use, or the remaining gap has been identified precisely. Extra providers add no value without a result they help establish.
 
 ## Worked assembly patterns
 

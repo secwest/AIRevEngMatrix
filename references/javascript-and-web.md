@@ -1,6 +1,6 @@
-# JavaScript, Electron, and web build recipes
+# JavaScript, Electron, and web analysis
 
-Build the components needed for the requested output. Split shipped-source analysis from runtime observation. Never execute a selected JavaScript artifact merely to parse it. Consult [graph and evidence conventions](evidence-and-runtime.md) if the result requires formal cross-layer joins or portable provenance.
+Shipped-source analysis and runtime observation are separate processes. Parsing a JavaScript artifact does not require executing it. Formal cross-layer joins and portable provenance follow the [graph and evidence conventions](evidence-and-runtime.md).
 
 | Result capability | Minimal implementation | Required output and validation |
 | --- | --- | --- |

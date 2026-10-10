@@ -1,6 +1,6 @@
-# Native, artifact, and bytecode build recipes
+# Native artifacts and bytecode
 
-Build only the rows relevant to the requested result. A parser provides raw structure; an installed reverse-engineering engine provides its own analysis; label which produced each decisive fact. Consult [graph and evidence conventions](evidence-and-runtime.md) when several components need formal joins or portable provenance.
+Native analysis combines raw structure from format parsers with interpretations from installed analysis engines. Each decisive fact retains its producer and source location. Multi-component joins and portable provenance use the [graph and evidence conventions](evidence-and-runtime.md).
 
 | Result capability | Minimal implementation | Result and check |
 | --- | --- | --- |

@@ -1,10 +1,10 @@
-# Firmware reverse-engineering recipes
+# Firmware reverse engineering
 
-Use this reference for vendor update packages, flash dumps, boot components, embedded Linux images, MCU/RTOS binaries, and PC firmware. Start with the requested result, then build only the parsers, disassembler views, capture adapters, or comparison harness needed to establish it. A filesystem tree, a chip-level memory map, and a running service are different results; do not infer one from another.
+Firmware analysis covers vendor update packages, flash dumps, boot components, embedded Linux images, MCU/RTOS binaries, and PC firmware. Each question requires a different combination of parsers, disassembler views, capture adapters, and comparison methods. A filesystem tree, a chip-level memory map, and a running service are distinct results with different evidence requirements.
 
-## Select the smallest path
+## Analysis paths
 
-| Requested result | Start with | Deliver and check |
+| Analysis question | Starting evidence | Result and check |
 | --- | --- | --- |
 | Identify the image | Hash, header/format probe, bounded strings and entropy windows | Format candidates, device/build claims, exact byte ranges; cross-check headers and lengths |
 | Recover a component | Region map, format-specific extractor | Child bytes, parent offset and digest; validate format structure and boundaries |
@@ -15,9 +15,9 @@ Use this reference for vendor update packages, flash dumps, boot components, emb
 | Compare releases | Matched components, normalized filesystem/code diff | Changed component and behavior candidates; prove matching identity and report unmatched regions |
 | Observe execution | Suitable board/device or isolated emulator, serial/debug capture | Events within a stated capture window; distinguish modeled peripherals from real hardware |
 
-## Assemble the components
+## Toolkit components
 
-Probe installed tools and versions on the actual host, then choose the few components required by the selected result. Use an existing parser where it supplies validated structure; write a narrow adapter when its output lacks provenance or a vendor format is unsupported.
+Installed tools and versions determine which components are available. Existing parsers provide validated structure for known formats; narrow adapters supply missing provenance or support a vendor format.
 
 | Component | Candidate engine or direct implementation | Adapter output |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ For a UEFI capsule or SPI image, map flash descriptor/regions when present, firm
 
 For update or integrity questions, trace capsule acceptance, firmware-management policy, authenticated variable handling, signed regions, and any measured-boot claims separately. A signature or measurement field found in the image does not establish the platform's enforcement state. Compare firmware volumes by GUID and image digest, not only by textual module names.
 
-## Execute only when the result requires it
+## Runtime observation
 
 Static extraction should not launch firmware. When runtime evidence matters, select the lightest adequate method: existing logs, isolated user-mode execution of one binary, system emulation with a supported board, a peripheral-aware harness, or authorized hardware observation. QEMU loading bytes is not the same as emulating the actual board; CPU, memory layout, flash, interrupts, peripherals, and boot ROM behavior must match the claim being tested. Record emulator version, machine model, loaded ranges, stubs, network exposure, and capture window. Keep emulated networks isolated unless the requested test requires a defined connection.
 
@@ -78,7 +78,7 @@ For physical devices, prefer passive serial/network capture before invasive debu
 
 Validate the narrowest result that matters: parser offsets round-trip to raw bytes; extracted child digests are stable; a boot-stage reference points to the correct image; a service path reaches its actual entry point; a claimed update check has a corresponding verifier branch; a runtime event repeats under the same conditions. For version comparisons, pair like-for-like components using digest, build ID, partition role, and architecture; report changed packaging separately from changed code. If a component cannot be extracted or matched, preserve it as an explicit unknown.
 
-The answer should give the requested finding first, then the exact supporting offsets, addresses, paths, or capture events. Include target digest, acquisition completeness, key tool versions, and material uncertainty. Optional graphs and evidence bundles follow [the shared conventions](evidence-and-runtime.md) only when cross-layer joins or auditability warrant them.
+A firmware finding consists of the result and its supporting offsets, addresses, paths, or capture events, along with target digest, acquisition completeness, key tool versions, and material uncertainty. Optional graphs and evidence bundles follow [the shared conventions](evidence-and-runtime.md) when cross-layer joins or auditability warrant them.
 
 ## Format and engine references
 

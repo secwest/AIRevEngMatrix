@@ -1,10 +1,10 @@
 # Result capability matrix
 
-Choose a row by the result the user needs, then read its recipe. Each row names a minimal starting toolkit, an output that can answer the question, and a check that can falsify a wrong answer. Expand only when the first result leaves a material gap. Tools named here are examples, not prerequisites or proof of availability.
+Each row maps an analysis question to a starting toolkit, expected output, and a check that can falsify an incorrect result. The named tools are examples, not prerequisites or evidence that an engine is installed. Additional components address gaps left by the initial analysis.
 
 ## Static artifacts and code
 
-| Requested result | Smallest useful toolkit | Deliver | Check | Recipe |
+| Analysis question | Starting components | Result | Check | Method |
 | --- | --- | --- | --- | --- |
 | Identify an unknown file or package | Magic/header reader, file hash, bounded container listing | Format, architecture, member inventory and likely entry points | Header and member ranges fit the original bytes | [Native/artifacts](native-and-artifacts.md) |
 | Extract files from an archive, app or firmware | Format-aware extractor, path validation, hashes | Extracted tree with parent paths and digests | No output escapes destination; child digest matches extraction | [Native/artifacts](native-and-artifacts.md), [firmware](firmware.md) |
@@ -32,7 +32,7 @@ Choose a row by the result the user needs, then read its recipe. Each row names 
 
 ## Runtime and device behavior
 
-| Requested result | Smallest useful toolkit | Deliver | Check | Recipe |
+| Analysis question | Starting components | Result | Check | Method |
 | --- | --- | --- | --- | --- |
 | Observe native calls or UI actions | Debugger/tracer and accessibility/window API | Ordered calls, UI elements, selected arguments and timing | Correlate module identity and load slide; report attach gap | [Native/artifacts](native-and-artifacts.md) |
 | Inspect an Android device or acquire an app | ADB client with explicit serial | Device/package identity, files/APKs, logs or screen | Verify pulled bytes and package/split completeness | [Managed/mobile](managed-mobile-firmware.md) |
@@ -49,7 +49,7 @@ Choose a row by the result the user needs, then read its recipe. Each row names 
 
 ## Differences and reconstruction
 
-| Requested result | Smallest useful toolkit | Deliver | Check | Recipe |
+| Analysis question | Starting components | Result | Check | Method |
 | --- | --- | --- | --- | --- |
 | Compare two artifacts or packages | Digests, member manifests, format parsers | Exact, structural and unmatched changes | Identical-input comparison returns no changes | [Process/comparison](process-and-reconstruction.md) |
 | Compare firmware releases | Paired partitions, filesystem manifests, code/config diff | Changed components and plausible behavior changes | Match component roles and architecture; keep unmatched regions explicit | [Firmware](firmware.md) |
@@ -61,4 +61,4 @@ Choose a row by the result the user needs, then read its recipe. Each row names 
 
 ## Supporting structures
 
-For a one-off question, the requested output plus decisive source locations is enough. Use [graph and evidence conventions](evidence-and-runtime.md) when results must be combined across versions or layers, exported for audit, queried repeatedly, or tracked as reconstruction obligations. A graph, evidence bundle or session service is an implementation aid, not a substitute for the answer.
+A one-off result can consist of the finding and decisive source locations. [Graph and evidence conventions](evidence-and-runtime.md) support results combined across versions or layers, exported for audit, queried repeatedly, or tracked as reconstruction obligations. A graph, evidence bundle, or session service supports the finding; it does not replace it.

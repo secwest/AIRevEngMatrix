@@ -1,12 +1,12 @@
-# Optional graph and evidence conventions
+# Graph and evidence conventions
 
-Read this when a result depends on traceable joins, must be transported or audited, or requires a reconstruction ledger. It documents supporting structures; ordinary analysis should return the requested result with enough source detail to check it. A small one-off script does not need this full model.
+These structures support traceable joins, portable results, audits, and reconstruction ledgers. A single finding needs only enough source detail to verify it; repeated cross-layer analysis benefits from the fuller data model.
 
 ## Data model
 
 Represent each target as an immutable artifact identity: SHA-256 of original bytes, size, acquisition path/URL, acquisition time, and container member path when applicable. For a transformed artifact retain parent identity, transform name/version, parameters, output digest, and exact input byte range if known. For live targets record process/device/browser target identity and attach/start/end times; a live identity is not a substitute for a file digest.
 
-Each evidence record should contain:
+An evidence record has this structure:
 
 ```json
 {
@@ -23,17 +23,17 @@ Each evidence record should contain:
 }
 ```
 
-Do not claim that JSON alone authenticates evidence. For portable bundles, create a manifest of relative paths, sizes, SHA-256 digests, schema version, and a canonical digest of the manifest. Optional signatures require a real signing key and verification step. On import, verify every referenced file and reject path traversal, duplicate normalized paths, digest mismatch, unknown required schema versions, and missing records. Never execute imported content. If only a saved extract exists, describe it as a historical snapshot.
+JSON serialization alone does not authenticate evidence. A portable bundle has a manifest of relative paths, sizes, SHA-256 digests, schema version, and a canonical digest of the manifest. Optional signatures require a real signing key and verification step. Import verification rejects path traversal, duplicate normalized paths, digest mismatch, unknown required schema versions, and missing records. Imported content is data, not executable code. A saved extract represents a historical snapshot.
 
-Use a separate unknown ledger: ID, question, affected claim, reason, evidence needed to resolve it, status, and resolution evidence. Status moves to resolved only when new evidence explicitly answers the question; deleting or renaming an unknown does not resolve it.
+An unknown ledger records ID, question, affected claim, reason, evidence needed to resolve it, status, and resolution evidence. Status moves to resolved only when new evidence explicitly answers the question; deleting or renaming an unknown does not resolve it.
 
-For repeated queries over a completed analysis, store the result once and provide bounded deterministic views: summary, binary layout sections/symbols/mitigations/linkage, JavaScript modules/assets, or native procedure/pseudocode/assembly/blocks/references. Each view names its parent result ID, selector, offset and limit, and returns a digest of the selected material. A view does not rerun analysis or imply that an omitted page is absent. Use stable node IDs when a path is ambiguous.
+Repeated queries over a completed analysis use one stored result and bounded deterministic views: summary, binary layout sections/symbols/mitigations/linkage, JavaScript modules/assets, or native procedure/pseudocode/assembly/blocks/references. Each view names its parent result ID, selector, offset and limit, and returns a digest of the selected material. A view does not rerun analysis or imply that an omitted page is absent. Stable node IDs disambiguate paths.
 
 ## Provider interface
 
 A small adapter can expose `probe()` (installed/compatible/version/host), `open(target)`, `run(request, limits)`, and `close()`. Return structured facts plus raw output references and typed errors: `invalid_input`, `unsupported_target`, `capability_unavailable`, `permission_denied`, `timeout`, `partial_capture`, `artifact_changed`, `producer_failed`. Keep availability separate from advertised capability. Use a session registry only when stateful engines are needed; identify sessions by exact artifact digest and provider instance. On each operation verify the file still matches the session digest or mark coordinates unverified.
 
-For commands, pass an argument vector with no shell interpolation; record executable absolute path and version, working directory, selected environment overrides, exit code, bounded stdout/stderr, and timeout. For parsers, cap input size, recursion, decompression ratio, object count, and output volume. Run untrusted executables only when the task requires runtime evidence and the user/host authorizes execution; a temp directory and limits do not constitute a security sandbox. Cleanup owned child processes and temporary files on timeout or cancellation, then report any cleanup failure.
+Command adapters use argument vectors without shell interpolation and record executable path and version, working directory, selected environment overrides, exit code, bounded stdout/stderr, and timeout. Parser limits cover input size, recursion, decompression ratio, object count, and output volume. Execution of untrusted code requires runtime evidence and authorization; a temp directory and resource limits are not a security sandbox. Timeout or cancellation cleanup includes owned child processes and temporary files, with any failure recorded.
 
 ## Coordinate and join rules
 
@@ -46,4 +46,4 @@ For commands, pass an argument vector with no shell interpolation; record execut
 
 Before relying on a new adapter, use a small fixture with known values and one target-specific check. Useful checks: archive member digest matches raw extraction; parsed section offsets fit within the file; virtual-to-file mapping round trips; source-map generated position maps to an expected original span; managed token resolves to the expected signature; ADB pull digest equals the acquired file; browser event order and screenshot metadata match the scenario; a comparison against identical inputs yields no changes. For claims that depend on opaque producer output, inspect a raw sample and disclose the producer's limits.
 
-Deliver the smallest reproducible package: source script(s), dependency versions, fixture or validation command, evidence bundle, and a short result report. Do not create a permanent general-purpose service unless the user actually needs one.
+A reproducible package contains the source scripts, dependency versions, fixture or validation command, evidence bundle, and a short result report. A permanent service is a separate deployment choice, not part of an ordinary analysis package.

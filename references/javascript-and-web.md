@@ -2,6 +2,8 @@
 
 Shipped-source analysis and runtime observation are separate processes. Parsing a JavaScript artifact does not require executing it. Formal cross-layer joins and portable provenance follow the [graph and evidence conventions](evidence-and-runtime.md).
 
+The [JavaScript development-environment workflow](javascript-reverse-engineering.md) adds compiler/language interpretation, Hermes and V8 recovery efforts, and source-versus-bytecode fixture requirements to these package and capture methods.
+
 | Result capability | Minimal implementation | Required output and validation |
 | --- | --- | --- |
 | Package and application intake | Inventory directory, ZIP, or Electron ASAR using a bounded reader such as `@electron/asar`, with path-safe extraction and digests. Include declared external ASAR members. Read package.json, Electron main/preload/renderer entries, HTML script tags, import maps, source maps, and chunk manifests. | File graph with exact member paths/digests and acquisition gaps; verify one resolved entry and one extracted member digest. |

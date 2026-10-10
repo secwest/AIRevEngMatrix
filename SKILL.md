@@ -21,6 +21,7 @@ Start with the result the user wants: a function explanation, recovered source, 
 | --- | --- |
 | Native executables, Apple bundles, native UI, crashes, binary layout, EVM bytecode | [Native and artifacts](references/native-and-artifacts.md) |
 | Language identification, decompiler selection, C/C++ or other compiled language reconstruction | [Language and decompiler guide](references/language-decompilation.md) |
+| Environment-specific decompilation, language lowering, compiler/runtime metadata or representative reconstruction checks | [Development environments](references/development-environments.md), then the selected environment's workflow |
 | Rust traits, enums, generics, async state machines, panic paths or stripped binaries | [Rust reverse engineering](references/rust-reverse-engineering.md) |
 | Python/Lua bytecode, Dart/Flutter, Unity IL2CPP, Hermes, BEAM, JIT specializations, legacy or custom VMs | [Virtual machines](references/virtual-machines.md) |
 | JavaScript packages, Electron, web pages, CDP, browser scenarios, source maps, network captures | [JavaScript and web](references/javascript-and-web.md) |

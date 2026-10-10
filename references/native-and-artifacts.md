@@ -4,6 +4,8 @@ Native analysis combines raw structure from format parsers with interpretations 
 
 Use the [language/decompiler taxonomy](language-decompilation.md) for engine selection and the [Rust guide](rust-reverse-engineering.md) for Rust constructs and compiler metadata. [Binary transformations](binary-transformations.md) covers unpacking, assembly, rebuilding and snippet emulation; [platform analysis](platform-and-kernel.md) covers kernel, driver, eBPF and GPU boundaries.
 
+Environment-specific native workflows cover [C/C++](cpp-reverse-engineering.md), [Apple Swift/Objective-C](apple-reverse-engineering.md), [Go](go-reverse-engineering.md), and [scientific/legacy compilers](specialized-development-environments.md).
+
 | Result capability | Minimal implementation | Result and check |
 | --- | --- | --- |
 | File and bundle intake | Magic/header detection plus bounded ZIP/TAR/plist readers; enumerate members with sizes, offsets when available, digests, and path-safe extraction. Apple bundle metadata comes from Info.plist; preserve raw and decoded forms. | Hash original carrier and extracted member; reject traversal, escaping links, archive bombs, and invalid ranges. Shared or overlapping spans require format-specific validation. |

@@ -2,6 +2,8 @@
 
 The [language taxonomy](language-decompilation.md) selects decompilers by representation. This guide covers bytecode and AOT cases needing additional version or runtime handling. Template: [VM study](../assets/templates/virtual-machine-study.yaml).
 
+Detailed environment workflows extend this shared procedure: [Python](python-reverse-engineering.md), [JVM/Android](jvm-android-reverse-engineering.md), [JavaScript](javascript-reverse-engineering.md), [Flutter/game engines](mobile-game-reverse-engineering.md), [Lua/BEAM/Ruby/PHP](interpreter-reverse-engineering.md), [Wasm](wasm-reverse-engineering.md), and [scientific/legacy environments](specialized-development-environments.md).
+
 ## Common procedure
 
 Identify the container, VM family, bytecode/snapshot version, architecture if applicable, and compression/encryption layers. Retain member digests and byte coordinates. A VM name alone is not enough: opcode assignments, constant encodings, instruction widths, and serialized layouts can change independently of a product version.
@@ -12,7 +14,7 @@ Compare decisive decompiled branches, stack/register effects, and exception path
 
 ## Python and packaged Python
 
-[pycdc](https://github.com/zrax/pycdc), [uncompyle6](https://github.com/rocky/python-uncompyle6), and [decompyle3](https://github.com/rocky/python-decompile3) are source-reconstruction candidates only for bytecode versions and constructs they actually support. xdis supplies a separate disassembly path. Record the tool's execution Python version separately from the target bytecode version. decompyle3's stated target range is narrower than current Python releases.
+[PyLingual](https://github.com/syssec-utd/pylingual), [pycdc](https://github.com/zrax/pycdc), [uncompyle6](https://github.com/rocky/python-uncompyle6), and [decompyle3](https://github.com/rocky/python-decompile3) are source-reconstruction candidates only for bytecode versions and constructs they actually support. xdis supplies a separate disassembly path. Record the tool's execution Python version separately from the target bytecode version. decompyle3's stated target range is narrower than current Python releases. The Python workflow covers PyLingual's local model/configuration and target-compilation dependencies.
 
 Extract supported packaged formats with an identified extractor and validate module headers before decoding. Keep native extensions, embedded interpreter identity, encrypted members, and missing modules separate. Check exception tables, closures, generators, comprehensions, and version-specific call instructions. A decompiler returning text without an error is not a correctness check. [Python intake](formats-and-runtimes.md) retains code-object identities and version rules.
 

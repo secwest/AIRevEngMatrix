@@ -22,6 +22,7 @@ The YAML records are documentation formats. No runner automatically interprets t
 | [Test cases](../assets/templates/test-cases.csv) | Define normal, malformed, and repeatability cases with expected observations | [Testing](testing-and-constraints.md) |
 | [Finding](../assets/templates/finding.md) | Deliver the answer with decisive evidence and limits | [Assembly](assembly-patterns.md) |
 | [Decompilation study](../assets/templates/decompilation-study.yaml) | Bind source hypotheses, shipped representation, engine support, pseudocode and instruction checks | [Languages](language-decompilation.md), [Rust](rust-reverse-engineering.md) |
+| [Environment study](../assets/templates/environment-study.yaml) | Bind compiler/runtime, paired artifacts, recovery effort, language constructs and baseline/reconstruction checks | [Development environments](development-environments.md), [source fixtures](environment-fixtures.md) |
 | [VM study](../assets/templates/virtual-machine-study.yaml) | Record versioned bytecode, paired native metadata, decoder support and unknown instructions | [Virtual machines](virtual-machines.md) |
 | [Platform trace](../assets/templates/platform-trace.yaml) | Specify process/kernel capture or eBPF/GPU/shader analysis with loss and binding checks | [Platform and kernel](platform-and-kernel.md) |
 | [Hardware scope](../assets/templates/hardware-scope.yaml) | Bind device identity, register/RTOS schemas, trust boundaries, signals and specialist instruments | [Firmware specializations](firmware-specializations.md) |

@@ -2,6 +2,8 @@
 
 Managed-code and mobile analysis depend on the available assemblies, packages, devices, and analysis engines. [Graph and evidence conventions](evidence-and-runtime.md) apply to formal cross-layer joins and portable provenance. An engine named here is a candidate dependency; an adapter specification does not establish that a licensed engine or device exists.
 
+Detailed decompiler selection and language lowering follow the [.NET](dotnet-reverse-engineering.md), [JVM/Android](jvm-android-reverse-engineering.md), and [Flutter/game-engine](mobile-game-reverse-engineering.md) workflows. This guide retains the package, device and adapter operations.
+
 ## .NET assemblies
 
 1. Detect PE/CLI metadata and deployment form without loading code. Record assembly identity, modules, references, target framework, resources, ReadyToRun/native indicators and original digest. Use dnfile/dnlib, System.Reflection.Metadata, ILSpy APIs, or `ildasm` output.

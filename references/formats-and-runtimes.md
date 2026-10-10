@@ -2,6 +2,8 @@
 
 This guide covers declarative binary parsers, WebAssembly, JVM classes, Python bytecode, and Go runtime metadata. Native code, .NET, Android, and JavaScript retain their existing [capability routes](capability-index.md).
 
+For detailed reconstruction, use the [Wasm](wasm-reverse-engineering.md), [JVM/Android](jvm-android-reverse-engineering.md), [Python](python-reverse-engineering.md), and [Go](go-reverse-engineering.md) workflows alongside the structural procedures here.
+
 ## Engine selection
 
 | Engine | Useful output | Conditions |

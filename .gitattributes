@@ -1,6 +1,16 @@
 *.md text eol=lf
 *.py text eol=lf
 *.rs text eol=lf
+*.cpp text eol=lf
+*.cs text eol=lf
+*.csproj text eol=lf
+*.java text eol=lf
+*.go text eol=lf
+*.swift text eol=lf
+*.mjs text eol=lf
+*.dart text eol=lf
+*.lua text eol=lf
+*.erl text eol=lf
 *.yaml text eol=lf
 *.ksy text eol=lf
 *.csv text eol=lf

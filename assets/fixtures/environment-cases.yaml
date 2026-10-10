@@ -1,0 +1,49 @@
+schema_version: 1
+kind: behavior_fixtures
+name: small_language_constructs
+scope: first_argument_only_for_listed_cases
+comparison:
+  stdout_normalization: crlf_to_lf
+  stderr: ""
+  exit_code: 0
+  profile_suffixes:
+    go: "cleanup\n"
+cases:
+  - id: missing
+    argv: []
+    stdout: "err:missing\n"
+  - id: zero
+    argv: ["0"]
+    stdout: "ok:7\n"
+  - id: ordinary
+    argv: ["8"]
+    stdout: "ok:15\n"
+  - id: maximum_success
+    argv: ["248"]
+    stdout: "ok:255\n"
+  - id: arithmetic_overflow
+    argv: ["249"]
+    stdout: "err:overflow\n"
+  - id: parse_range
+    argv: ["256"]
+    stdout: "err:invalid\n"
+  - id: parse_text
+    argv: ["invalid"]
+    stdout: "err:invalid\n"
+  - id: negative
+    argv: ["-1"]
+    stdout: "err:invalid\n"
+  - id: empty
+    argv: [""]
+    stdout: "err:invalid\n"
+  - id: fractional
+    argv: ["1.5"]
+    stdout: "err:invalid\n"
+assessment:
+  baseline_behavior: unobserved
+  reconstructed_behavior: unobserved
+  instruction_or_ir_checks: unobserved
+  limits:
+    - Cases do not specify every possible input string.
+    - Source behavior alone does not test a decompiler.
+    - A profile requires the matching compiler/runtime and generated artifact.

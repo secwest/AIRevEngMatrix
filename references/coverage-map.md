@@ -4,6 +4,8 @@ Coverage is described across target representation, analysis method, and validat
 
 Template: [coverage assessment](../assets/templates/coverage-assessment.yaml). [Language decompilation](language-decompilation.md) supplies the source-language view; [operation selectors](operation-catalog.md) describe individual results.
 
+The [development-environment index](development-environments.md) supplies detailed workflows across compiler/runtime families. Its [fixture profiles](environment-fixtures.md) distinguish available source examples, required SDK-specific examples, baseline execution and actual decompiler assessment.
+
 ## Target and method routes
 
 | Target or question | Primary route | Reusable record | Target-dependent boundary |

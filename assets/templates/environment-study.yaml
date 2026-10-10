@@ -1,0 +1,42 @@
+schema_version: 1
+kind: environment_study
+record_state: draft
+question: null
+environment:
+  family: null
+  source_language: null
+  compiler_and_runtime: null
+  architecture_abi_and_os: null
+  build_profile_and_flags: null
+  shipped_representations: []
+artifacts:
+  originals_and_digests: []
+  paired_metadata_debug_and_resources: []
+  dependencies_and_versions: []
+selection:
+  decompiler_and_revision: null
+  plugins_models_and_databases: []
+  direct_cli_or_api: null
+  supported_format_probe: null
+  narrower_fallback: null
+recovery:
+  member_function_or_method_identity: null
+  output_kind: null
+  raw_instruction_ir_and_metadata: []
+  recovered_constructs: []
+  missing_or_ambiguous_constructs: []
+  native_runtime_or_resource_boundaries: []
+assessment:
+  fixture_source_and_digest: null
+  baseline_build_and_argv: []
+  baseline_behavior: unobserved
+  analysis_invocation_and_limits: null
+  decisive_instruction_checks: []
+  reconstruction_build_and_argv: []
+  reconstructed_behavior: unobserved
+  malformed_unsupported_or_missing_input_checks: []
+result:
+  outcome: unobserved
+  supported_scope: []
+  unchecked_profiles: []
+  limitations: []

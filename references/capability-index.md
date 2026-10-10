@@ -98,6 +98,8 @@ The [operation catalogue](operation-catalog.md) decomposes these outcomes into i
 
 ## Language recovery, VMs, platforms, and specialist targets
 
+For language-specific recovery, use the [development-environment workflows](development-environments.md) to select an actual decompiler effort, interpret lowered constructs and define the representative check. The [environment study](../assets/templates/environment-study.yaml) records compiler/runtime and reconstruction outcomes.
+
 | Analysis question | Starting components | Result | Check | Method |
 | --- | --- | --- | --- | --- |
 | Choose a decompiler for a language/compiler | Representation inventory, support probe, compatible native/VM engine | Selected engine and supported output kind | Inspect a representative body and preserve unsupported constructs | [Languages](language-decompilation.md) |

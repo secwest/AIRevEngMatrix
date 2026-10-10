@@ -228,6 +228,8 @@ Method: [Matching and runtime artifacts](matching-and-runtime-artifacts.md).
 
 Methods: [Language selection](language-decompilation.md), [Rust](rust-reverse-engineering.md), and [virtual machines](virtual-machines.md).
 
+The [development-environment workflows](development-environments.md) bind these operations to specific compilers, runtimes, recovery efforts and construct-level checks. The [environment fixtures](environment-fixtures.md) supply representative inputs and distinguish baseline execution from reconstruction verification.
+
 | Operation | Input and method | Result | Check or limit |
 | --- | --- | --- | --- |
 | `select_decompilation_engine` | Exact shipped representation, architecture, compiler/VM evidence and engine support probe. | Minimal engine choice, output kind and supported subset. | Installation, format parsing, instruction decoding and decompilation are distinct support claims. |

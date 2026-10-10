@@ -14,7 +14,11 @@ Compare two captures by scenario version, target identity and environment first.
 
 For a protocol result, start from an authorized capture or test endpoint. Preserve raw messages, direction, transport, endpoint identity and timing. Determine framing before decoding fields; separate wire bytes from inferred field names. Vary one controlled input at a time to test length fields, ordering, state transitions, error behavior and version negotiation. A parser should reject malformed lengths and truncated frames explicitly. Do not infer encrypted payload contents from metadata alone.
 
+PCAP/PCAPNG analysis can use Wireshark/TShark or a bounded capture parser. Packet boundaries are distinct from application-message boundaries: TCP retransmissions, out-of-order segments, gaps, and IP fragmentation affect reconstruction. Reassembled messages retain references to the contributing packets and any missing ranges. Capture interface, snap length, timestamp precision, filters, and known drop counts define coverage; offload artifacts can also affect apparent checksums and segmentation. The [TShark documentation](https://www.wireshark.org/docs/man-pages/tshark) describes capture and dissection controls. HAR or application event logs do not substitute for packet-level evidence about transport behavior.
+
 For remote fingerprintability, state the vantage point and what a remote peer can actually observe: headers, banners, TLS or protocol negotiation, response shapes, timing distributions, error codes, redirect patterns, resource paths or stable identifiers. Test stability across sessions, configurations and versions, with a control service or alternative implementation where possible. Report the preconditions for each signal and whether it identifies a product, version family, configuration or only a broad technology class. A local code trait is remotely fingerprintable only if a reachable path makes it observable. Keep probes within the user's authorized target and rate limits.
+
+Attribution follows the network path. TLS termination, reverse proxies, CDNs, shared libraries, and configurable banners can produce signals shared by many applications. A useful fingerprint record contains `signal | vantage | request/state preconditions | repetitions | controls | likely producer | supported specificity | counterexamples`. Correlated features from one shared component do not count as independent confirmation. Timing claims include sample counts, variability, and a control for network or load effects; a single response establishes only that observation.
 
 ## Cross-artifact comparisons
 
@@ -46,3 +50,5 @@ When a result needs portable provenance, implement export/import as a digest-che
 - An application graph path identifies the source record for every edge and refuses a path across mismatched build IDs.
 - An obligation with a passing static check but missing runtime fixture remains open; adding a comparable passing runtime verifier closes it.
 - A tampered exported evidence file fails import digest verification.
+- A TCP stream with a missing segment remains incomplete, even if a decoder recognizes later messages.
+- A header shared by a proxy and several unrelated applications is attributed at that shared layer until a discriminating application signal is established.

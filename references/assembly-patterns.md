@@ -7,7 +7,7 @@ The capability index names outcomes. The family methods describe the analysis co
 For a multi-component investigation, the implementation matrix records dependencies and gaps:
 
 | Requested result | Needed fact | Input | Component | Engine/API | Check | Remaining gap |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | --- | --- | --- | --- |
 
 Components form a dependency chain from the requested result. A typical chain is:
 
@@ -46,7 +46,9 @@ Live connectors add `attach(target_selector)` and `detach()`; stateful native en
 
 ## Engine selection
 
-Documented installed APIs provide the strongest interface. Structured CLI output is the next option. Human-readable output is usable when its format is version pinned and verified against fixtures. Direct format parsers are practical for bounded, validated subsets; complex binary formats usually need mature parsers. A missing proprietary engine leaves its capability unavailable unless another engine's distinct semantics are stated.
+An existing documented API or CLI that supplies the needed facts is usually sufficient. Structured output reduces dependence on presentation formatting; its schema and semantics still depend on the tool version. Human-readable output is usable when its format is version pinned and verified against fixtures. Direct format parsers are practical for bounded, validated subsets; complex binary formats usually need mature parsers. A missing proprietary engine leaves its capability unavailable unless another engine's distinct semantics are stated.
+
+Selection depends on target format, processor and instruction mode, ABI, host OS, engine edition, automation interface, and required output. Successful launch does not establish support for the target. Disassembly, decompilation, and debugging can have different architecture coverage in the same product. A format or processor probe and one representative query establish what the selected installation can actually provide.
 
 Dependency records include source, version, license and digest when available; installation remains subject to host permissions. A narrow adapter can connect existing engines, but it is not a substitute for a full decompiler, JEB, browser, emulator, debugger or native sandbox.
 
@@ -62,10 +64,12 @@ The process ends when the claim has enough support for its intended use, or the 
 
 ## Worked assembly patterns
 
-**Native call path.** Hash executable -> parse architecture and image map -> open exact digest in one decompiler -> export functions/calls/xrefs -> breadth-first search from selected entry to target API -> inspect decisive call instructions -> report direct path, unresolved indirect branches and decompiler version. If runtime dispatch matters, add debugger/Frida observation and match module build ID plus load slide.
+**Native call path.** Hash executable -> parse architecture and image map -> open exact digest in one analyzer -> export functions/calls/xrefs -> bounded search from selected entry to target API -> inspect decisive call instructions -> report the static relationship, unresolved dispatch, and engine version. Branch conditions and execution state determine path feasibility. If an actual invocation or runtime dispatch matters, debugger/Frida observations can supply it, with module identity and load mapping retained.
 
 **Electron UI action.** Hash ASAR and native add-ons -> extract entries -> parse renderer/preload/main import graph -> identify UI event and IPC channel candidates -> attach to selected Electron window or run a controlled scenario -> observe event and IPC/main behavior where available -> join exact script/module identities -> report each edge's authority and gaps.
 
 **APK on device.** Probe adb and select serial -> record device/build/package identity -> pull base and splits, hash -> parse manifest/resources/DEX with installed engines -> trace selected component/class/method -> use bounded logcat or a scenario only if runtime proof is required -> report acquisition completeness and code/runtime joins.
+
+**Firmware service.** Hash image -> identify and validate container layers -> recover the relevant filesystem and its metadata -> follow init/configuration to the service executable -> inspect listener and handler code -> check a matching capture when remote reachability matters -> report the startup path, externally observable behavior, and missing configuration or hardware dependencies.
 
 **Reconstruction parity.** Capture authoritative scenario with exact inputs/settings -> derive obligations and required cases -> bind each to reconstruction owner -> run same fixtures against reconstruction -> normalize declared nondeterminism -> compare outputs/effects -> keep failures, unmatched cases and weak authority open.

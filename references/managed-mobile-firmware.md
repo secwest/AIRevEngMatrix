@@ -11,6 +11,8 @@ Managed-code and mobile analysis depend on the available assemblies, packages, d
 
 Validate on a small assembly with a known method, call and P/Invoke. A member query must return its token, signature and instruction span. A native-boundary verifier must report unresolved libraries as unknown.
 
+Deployment form determines the analysis path. A single-file carrier can contain managed assemblies that need extraction before metadata analysis; ReadyToRun can include native code alongside managed material. [Native AOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) compiles IL into native code at publication, so a CLI metadata parser cannot be assumed to recover its methods as ordinary CIL bodies. Such code follows the [native analysis](native-and-artifacts.md) path, with retained metadata and symbols used where available.
+
 ## Android APK and resources
 
 Treat APK/AAB-derived APK bytes as ZIP carriers. Read manifest, signing metadata, DEX files, resources.arsc, native libraries, assets and split relationships with bounded parsers. `aapt2`, `apkanalyzer`, Apktool, JADX or equivalent installed engines can provide decoded resources and code. Keep original XML/resource IDs and decoded values linked. Decompilation is a producer report; DEX method/class descriptors and bytecode offsets anchor claims.

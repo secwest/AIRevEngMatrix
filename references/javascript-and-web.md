@@ -4,7 +4,7 @@ Shipped-source analysis and runtime observation are separate processes. Parsing 
 
 | Result capability | Minimal implementation | Required output and validation |
 | --- | --- | --- |
-| Package and application intake | Inventory directory, ZIP, or Electron ASAR with path-safe extraction and digests. Read package.json, Electron main/preload/renderer entries, HTML script tags, import maps, source maps, and chunk manifests. | File graph with exact member paths/digests; verify one resolved entry and one extracted member digest. |
+| Package and application intake | Inventory directory, ZIP, or Electron ASAR using a bounded reader such as `@electron/asar`, with path-safe extraction and digests. Include declared external ASAR members. Read package.json, Electron main/preload/renderer entries, HTML script tags, import maps, source maps, and chunk manifests. | File graph with exact member paths/digests and acquisition gaps; verify one resolved entry and one extracted member digest. |
 | Static JS analysis | Parse with Babel, Acorn, SWC, or TypeScript AST configured for the syntax actually present. Build module import/re-export graph, symbol definitions/references, call sites, object property flow, IPC endpoints, routes, network endpoint candidates, and interface declarations. | Each edge cites generated file/span and parse mode. Dynamic require, computed property, eval, minified aliasing, and reflection create explicit unresolved edges. |
 | Feature explanation | Trace from a user-visible anchor through package roles, modules, exports, UI routes/components, IPC channels, network calls, native add-ons and persistence boundaries. Use a typed graph internally if it helps. | Return the supported behavior chain with source locations and unresolved steps. Mere graph reachability is not proof of execution. |
 | Source location and recovery | Decode source maps using a compatible mapping library; verify sourceMappingURL, map URL/base, generated file identity, names and sourcesContent. For code without maps, pretty-print or use an installed recovery engine such as Wakaru in a nonexecuting mode. | Preserve generated span, original source span, and mapping provenance. Recovered modules are hypotheses, not original files. |
@@ -20,7 +20,15 @@ Shipped-source analysis and runtime observation are separate processes. Parsing 
 
 ## Static tracing algorithm
 
-Start at concrete entry points and parse only reachable files, then expand when the question requires it. Resolve relative paths with extension/index rules and package exports, retaining the resolution algorithm and failure. Track symbol import/re-export chains and direct call sites. For Electron IPC, match channel literals and sender/handler contexts; computed channel names remain candidates. For source-to-bundle comparison, normalize ASTs and map original modules to generated chunks by source maps, exact strings, export shape, and call structure; report collisions and missing maps. For version comparison, use the same parser settings and compare stable roles/edges before raw names.
+Start at concrete entry points and parse only reachable files, then expand when the question requires it. Resolve paths using the actual runtime or bundler rules: CommonJS, ESM, browser import maps, and conditional package exports can select different files. Retain the resolution mode, conditions, and failures instead of applying one extension/index search to every target. Track symbol import/re-export chains and direct call sites. For Electron IPC, match channel literals and sender/handler contexts; computed channel names remain candidates. For source-to-bundle comparison, normalize ASTs and map original modules to generated chunks by source maps, exact strings, export shape, and call structure; report collisions and missing maps. For version comparison, use the same parser settings and compare stable roles/edges before raw names.
+
+An ASAR inventory includes entries marked as unpacked and their companion files, commonly under `app.asar.unpacked`. Missing external files make acquisition partial. Format-defined shared member spans are valid when their indexed lengths and contents agree; overlapping ranges alone do not establish corruption. The [ASAR format and tooling](https://github.com/electron/asar) describe external members and shared storage.
+
+## Source-map accuracy
+
+Mappings depend on the exact generated text, map URL, `sourceRoot`, source entries, and indexed-map sections where present. A map can supply locations while omitting original text; missing `sourcesContent` does not establish that source files are available. Referenced URLs or paths are untrusted locations and are resolved only within the investigation's acquisition scope. A stale map or a merely similar bundle does not establish an identity match.
+
+The [source-map specification](https://tc39.es/ecma426/) uses UTF-16 code units for JavaScript/CSS column offsets. Byte offsets and Unicode code-point counts can disagree with those coordinates. Each adapter records its API's line/column base and mapping bias; an unmapped span remains unmapped. A useful fixture includes a non-ASCII character and an unmapped generated span. Formatting or inferred module recovery retains its distinction from source text actually supplied by the build.
 
 ## Browser capture rules
 
@@ -34,7 +42,8 @@ Join a loaded script to shipped code only when bytes or a reliable source-map re
 
 ## Acceptance examples
 
-- An ASAR member's extracted digest matches its indexed bytes, and both entry points resolve.
+- An ASAR member's extracted digest matches its indexed bytes, and the selected entry points resolve.
+- An ASAR with a missing unpacked member reports partial acquisition; valid shared spans remain readable.
 - A source-map lookup maps a known generated position to the expected original file/line.
 - A passive capture includes its attach window and does not claim a request that completed before attachment.
 - Repeating a browser fixture scenario records the same action sequence and expected final assertion.

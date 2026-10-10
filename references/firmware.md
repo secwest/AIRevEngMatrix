@@ -12,6 +12,7 @@ Firmware analysis covers vendor update packages, flash dumps, boot components, e
 | Explain a feature | Rootfs service path or MCU call/interrupt path | Entry point, config, code path, externally visible effect; confirm decisive bytes and runtime behavior when available |
 | Explain a UEFI module | Firmware volume parser, GUID/dependency map, PE/COFF analyzer | Module identity, dispatch conditions and protocol uses; verify image bytes and dependency path |
 | Analyze an update | Manifest, signature/verification code, slot and rollback metadata | Acceptance and installation path; separate package declarations from enforcement |
+| Reconstruct a delta update | Payload operations, exact required base image, partition metadata | Reconstructed target bytes or explicit missing-base gaps; verify base and target digests |
 | Compare releases | Matched components, normalized filesystem/code diff | Changed component and behavior candidates; prove matching identity and report unmatched regions |
 | Observe execution | Suitable board/device or isolated emulator, serial/debug capture | Events within a stated capture window; distinguish modeled peripherals from real hardware |
 
@@ -23,10 +24,11 @@ Installed tools and versions determine which components are available. Existing 
 | --- | --- | --- |
 | Region discovery | Binwalk/Unblob plus bounded header reads and entropy windows | Candidate spans with raw offsets, header fields, validation status and overlaps |
 | Container/filesystem extraction | Unblob or a format-specific parser; UBI, SquashFS, CPIO, ext and archive tools as appropriate | Child bytes and paths, parent span, extractor diagnostics and hashes |
-| Boot metadata | FIT/U-Boot parser, `dtc`/libfdt, UEFI firmware-volume parser, partition parser or vendor header reader | Selected image/configuration, load addresses, boot arguments and referenced partitions |
+| Boot metadata | FIT/U-Boot parser, `dtc`/libfdt, UEFITool/UEFIExtract or another firmware-volume parser, partition parser or vendor header reader | Selected image/configuration, load addresses, boot arguments and referenced partitions |
+| OTA and logical partitions | Format-specific payload decoder and logical-partition metadata parser | Required base identities, operation/extents map, reconstructed partition digests and unsupported operations |
 | Native code | Disassembler/decompiler already available for the target ISA, plus a small address mapper | Functions, calls, strings and memory accesses tied to file offsets and load addresses |
 | Update comparison | Component manifest and normalized byte/file/code diff | Matched, changed and unmatched components with identity basis |
-| Runtime observation | QEMU with a supported machine, a single-process harness, serial capture or authorized debugger | Timestamped events, machine/peripheral assumptions and capture coverage |
+| Runtime observation | QEMU with a supported machine, a single-process harness, serial capture or OpenOCD/GDB with a compatible probe | Timestamped events, machine/peripheral assumptions and capture coverage |
 
 A custom parser should accept immutable bytes and explicit geometry or load-base parameters, reject out-of-range lengths and integer overflow, and return a structured result plus diagnostics. Test it on one known-good fixture and one malformed or truncated fixture. Do not let a scanner's label stand in for parser validation.
 
@@ -42,7 +44,15 @@ For raw flash, determine whether the dump includes NAND out-of-band (OOB) bytes,
 
 Build a compact region table with `parent digest | offset | length | candidate type | validation | child digest`. Set resource limits for recursion depth, output bytes, file count, and runtime. Extract to an isolated directory; reject absolute paths, `..` traversal, links that escape the tree, special files, and archive bombs. Never mount or execute a candidate during static inspection. Store byte ranges or reproducible extraction commands when a full extracted tree is unnecessary.
 
+The region table describes input spans. Decompressed files and reconstructed partitions have their own coordinates; they may depend on several input extents or a transformation with no byte-for-byte offset mapping. Their provenance records parent digests, input spans or extent lists, transformation/version, parameters, and output digest. Unknown mappings remain unknown. Filesystem metadata includes permissions, owners, links, extended attributes/capabilities when present, and device-node descriptions. Unsafe entries are recorded as metadata without being materialized on the host.
+
 Choose the parser from the actual layer: U-Boot/FIT, Android boot or OTA package, GPT/MBR, UBI/UBIFS, JFFS2, SquashFS, ext, CPIO/initramfs, compressed kernel, or vendor-specific framing. Keep compression, signing, encryption, and filesystem layers separate. A valid checksum or successful decompression does not establish authenticity; a signature field does not prove the bootloader checks it. If content is encrypted, report the visible header and verification path rather than claiming to know plaintext. Cross-check extracted sizes, internal checksums where applicable, superblocks, directory structure, and referenced partitions. UBI volumes and raw MTD eraseblocks require their own geometry and volume mapping; they are not ordinary block filesystems.
+
+## Update payloads and logical partitions
+
+A full image and a delta payload have different inputs. Delta operations may copy or transform ranges from a particular prior image. Reconstruction records the required base version and digest, verifies the available base, bounds source and destination extents, and verifies reconstructed sizes and hashes where specified. A missing or mismatched base leaves those operations unresolved; substituting zeros for unresolved extents does not recover their contents. Explicit zero-fill operations retain their declared semantics. The [Android OTA documentation](https://source.android.com/docs/core/ota/tools) describes incremental packages' dependency on the source build.
+
+Android sparse-image expansion, OTA application, and logical-partition extraction are separate transformations. [Dynamic partitions](https://source.android.com/docs/core/ota/dynamic_partitions) live within `super`; the logical layout comes from partition metadata rather than a simple concatenation of filesystem hits. Slot metadata and any snapshot/merge state affect interpretation of a live acquisition. A logical partition can occupy multiple physical extents, so its offset map retains every extent. Boot/vendor-boot formats, verified-boot metadata, and filesystem contents are analyzed at their own layers. A reconstructed partition does not establish that the device would accept the update.
 
 ## Reconstruct the boot and trust path
 
@@ -66,13 +76,19 @@ Trace startup through clock/memory initialization, interrupt registration, sched
 
 For a UEFI capsule or SPI image, map flash descriptor/regions when present, firmware volumes, firmware files and sections, NVRAM stores, and embedded PE/COFF modules. Keep capsule payload offsets distinct from installed flash offsets. Identify module GUID, UI name, architecture, compression section, and dependency expression before analyzing code. Follow the relevant SEC/PEI/DXE handoff or UEFI boot/runtime interface; a module's presence does not prove it dispatches in the selected boot mode. Use a firmware-volume parser and PE analyzer for static work. Hardware-facing tools such as CHIPSEC belong only in an authorized device workflow because they can require privileged hardware access.
 
+[UEFITool and UEFIExtract](https://github.com/LongSoft/UEFITool) provide structural inspection and extraction paths. Parser diagnostics and unsupported vendor wrappers remain part of the result. Module matching can require GUID, enclosing volume, section type, architecture, and digest together because a GUID or UI name need not identify a unique occurrence.
+
 For update or integrity questions, trace capsule acceptance, firmware-management policy, authenticated variable handling, signed regions, and any measured-boot claims separately. A signature or measurement field found in the image does not establish the platform's enforcement state. Compare firmware volumes by GUID and image digest, not only by textual module names.
 
 ## Runtime observation
 
 Static extraction should not launch firmware. When runtime evidence matters, select the lightest adequate method: existing logs, isolated user-mode execution of one binary, system emulation with a supported board, a peripheral-aware harness, or authorized hardware observation. QEMU loading bytes is not the same as emulating the actual board; CPU, memory layout, flash, interrupts, peripherals, and boot ROM behavior must match the claim being tested. Record emulator version, machine model, loaded ranges, stubs, network exposure, and capture window. Keep emulated networks isolated unless the requested test requires a defined connection.
 
+[QEMU user-mode emulation](https://www.qemu.org/docs/master/user/main.html) translates target system calls to the host; it does not supply the original kernel or board. Its loader/library environment and host isolation therefore matter to both behavior and containment. A stubbed NVRAM call or peripheral read can make execution progress, but any finding that depends on that stub remains conditional.
+
 For physical devices, prefer passive serial/network capture before invasive debug access. Record board revision, probe attachment, power cycle, reset state, and whether instrumentation can perturb timing. Keep writes, flashing, debug unlock, bootloader environment changes, and fault injection separate from read-only analysis and require appropriate authorization. A single boot trace supports only the observed configuration and window.
+
+Debug attach and memory reads can themselves halt or reset a target or trigger hardware register side effects. [OpenOCD operations](https://www.openocd.org/doc/html/Flash-Commands.html) depend on the board, adapter, memory region, and flash driver. The capture record includes those details and any halt/reset sequence. Passive serial capture has different effects from a debug session even if both ultimately return text or bytes.
 
 ## Verification and output
 

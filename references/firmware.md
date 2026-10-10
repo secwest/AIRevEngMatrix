@@ -2,6 +2,8 @@
 
 Firmware analysis covers vendor update packages, flash dumps, boot components, embedded Linux images, MCU/RTOS binaries, and PC firmware. Each question requires a different combination of parsers, disassembler views, capture adapters, and comparison methods. A filesystem tree, a chip-level memory map, and a running service are distinct results with different evidence requirements.
 
+The [firmware lab](firmware-lab.md) covers execution models, acquisition and buses. [Firmware specializations](firmware-specializations.md) extends these methods to register descriptions, RTOS state, trust boundaries, raw NAND, ACPI, USB, Bluetooth, RF, FPGA, PLC and physical measurements. Language-specific code follows the [decompiler guide](language-decompilation.md), including [Rust firmware](rust-reverse-engineering.md).
+
 ## Analysis paths
 
 | Analysis question | Starting evidence | Result and check |

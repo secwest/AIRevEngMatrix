@@ -1,0 +1,46 @@
+schema_version: 1
+kind: decompilation_study
+record_state: draft
+question: null
+target:
+  path: null
+  sha256: null
+  representation: null
+  source_language_hypothesis: null
+  language_evidence: []
+  architecture_and_abi: null
+  compiler_or_vm_version: null
+  optimization_lto_panic_mode: null
+  function_identity: null
+engine:
+  name: null
+  version_or_revision: null
+  edition_and_api: null
+  plugins: []
+  supported_target_probe: null
+  output_kind: null # original_text, metadata, pseudocode, presentation, reconstruction
+supporting_data:
+  symbols_and_debug_identities: []
+  demangler_and_version: null
+  original_to_demangled_names: []
+  library_or_type_database_identity: null
+analysis:
+  invocation_argv: []
+  limits: null
+  raw_instructions_or_ir: null
+  decompiled_output: null
+  source_coordinate_mapping: null
+  type_and_dispatch_hypotheses: []
+  lowered_language_constructs: []
+  suppressed_or_simplified_paths: []
+  unsupported_constructs: []
+checks:
+  representative_fixture: unobserved
+  abi_and_return_storage: unobserved
+  decisive_instruction_comparison: unobserved
+  concrete_behavior_cases: []
+result:
+  outcome: unobserved
+  completeness: unknown
+  supported_interpretation: null
+  limitations: []

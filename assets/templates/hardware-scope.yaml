@@ -1,0 +1,44 @@
+schema_version: 1
+kind: hardware_scope
+record_state: draft
+question: null
+family: null # registers, rtos, trust_boundary, usb, bluetooth, rf, hardware_trace, fpga, plc, measurement
+target:
+  device_and_revision: null
+  firmware_and_digests: []
+  part_or_vendor_format: null
+  reference_manual_and_schema: null
+  register_map_or_netlist: null
+  toolchain_or_runtime_version: null
+equipment:
+  instruments_and_versions: []
+  connection_and_power: null
+  calibration: null
+  capture_level: null
+  clocks_and_resolution: null
+trace:
+  source_protocol_and_version: null
+  source_ids_transport_and_sink: null
+  decoder_and_version: null
+  code_images_and_load_maps: []
+  synchronization_and_overflow: null
+experiment:
+  permitted_effects: []
+  known_initial_state: null
+  stimulus: null
+  trigger: null
+  reset: null
+  repetitions_and_limits: null
+  expected_observation: null
+  raw_captures: []
+checks:
+  target_description_match: unobserved
+  baseline: unobserved
+  independent_signal_or_state: unobserved
+  repeated_trials: []
+result:
+  outcome: unobserved
+  completeness: unknown
+  supported_subset: null
+  unavailable_hardware_or_format: []
+  limitations: []

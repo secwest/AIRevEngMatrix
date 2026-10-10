@@ -21,6 +21,13 @@ The YAML records are documentation formats. No runner automatically interprets t
 | [Memory and replay](../assets/templates/memory-replay.yaml) | Record Volatility analysis or rr execution/replay | [Runtime artifacts](matching-and-runtime-artifacts.md) |
 | [Test cases](../assets/templates/test-cases.csv) | Define normal, malformed, and repeatability cases with expected observations | [Testing](testing-and-constraints.md) |
 | [Finding](../assets/templates/finding.md) | Deliver the answer with decisive evidence and limits | [Assembly](assembly-patterns.md) |
+| [Decompilation study](../assets/templates/decompilation-study.yaml) | Bind source hypotheses, shipped representation, engine support, pseudocode and instruction checks | [Languages](language-decompilation.md), [Rust](rust-reverse-engineering.md) |
+| [VM study](../assets/templates/virtual-machine-study.yaml) | Record versioned bytecode, paired native metadata, decoder support and unknown instructions | [Virtual machines](virtual-machines.md) |
+| [Platform trace](../assets/templates/platform-trace.yaml) | Specify process/kernel capture or eBPF/GPU/shader analysis with loss and binding checks | [Platform and kernel](platform-and-kernel.md) |
+| [Hardware scope](../assets/templates/hardware-scope.yaml) | Bind device identity, register/RTOS schemas, trust boundaries, signals and specialist instruments | [Firmware specializations](firmware-specializations.md) |
+| [Binary transformation](../assets/templates/binary-transformation.yaml) | Preserve unpacking/rebuilding steps, patch preconditions, ABI and integrity effects | [Transformations](binary-transformations.md) |
+| [Protocol study](../assets/templates/protocol-study.yaml) | Recover framing, fields, schemas and state with replay and attribution checks | [Protocols](protocol-and-data-formats.md) |
+| [Coverage assessment](../assets/templates/coverage-assessment.yaml) | Track required target/method boundaries and separate documented from checked support | [Coverage map](coverage-map.md) |
 
 ## Record conventions
 
@@ -69,3 +76,23 @@ console.log(Buffer.from(record.payload).toString('hex')); // 616263
 ```
 
 Bad magic, unsupported version, and excessive declared length are parser validation errors. A short payload is an end-of-input error. The trailing-byte fixture parses a record successfully, then fails the wrapper's exact-consumption check. These are separate test outcomes.
+
+## Rust decompilation exercise
+
+The [Rust source fixture](../assets/fixtures/rust-patterns.rs) has no dependencies beyond the standard library. Its [behavior fixture](../assets/fixtures/rust-patterns.yaml) defines two compiler profiles and seven argument/output cases. Compile in a fresh output directory, record `rustc -vV`, the literal arguments and binary digest, then run each case and compare stdout, stderr and exit status. Only CRLF-to-LF normalization is permitted by the fixture.
+
+With paths adjusted to the investigation workspace, the debug profile is:
+
+```text
+rustc --edition=2021 -C opt-level=0 -C debuginfo=2 rust-patterns.rs -o rust-patterns-debug
+```
+
+The optimized profile is:
+
+```text
+rustc --edition=2021 -C opt-level=2 -C strip=symbols rust-patterns.rs -o rust-patterns-optimized
+```
+
+Use the platform's executable suffix where needed. Select a decompiler compatible with the output format, processor and compiler generation. Keep the known source separate from the initial interpretation when assessing reconstruction. Check parsing/error branches, checked addition, result layout, and any retained indirect trait call against the actual instructions. Optimizations may change or remove source constructs. The fixture does not require a particular assembly sequence, vtable layout, symbol spelling, or Rust-aware engine to succeed.
+
+Behavior checks establish the fixture's expected outputs on the recorded compiler/target. A decompiler comparison additionally requires its version, settings, raw output, instruction mapping, and observed failures. These two checks have separate outcomes.

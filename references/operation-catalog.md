@@ -224,6 +224,71 @@ Method: [Matching and runtime artifacts](matching-and-runtime-artifacts.md).
 | `extract_memory_artifact` | Selected mapped ranges, image identity and optional reconstruction plan. | Raw memory extraction and separately identified rebuilt artifact when requested. | Missing pages, relocations and headers remain explicit; validate rebuilt file layout. |
 | `record_process_execution`, `replay_process_execution` | Supported host, exact launch/input/environment or existing compatible trace. | Recording and dependencies or selected event/state explanation. | Initial execution has effects; one recorded schedule does not cover every execution. |
 
+## Language reconstruction and virtual machines
+
+Methods: [Language selection](language-decompilation.md), [Rust](rust-reverse-engineering.md), and [virtual machines](virtual-machines.md).
+
+| Operation | Input and method | Result | Check or limit |
+| --- | --- | --- | --- |
+| `select_decompilation_engine` | Exact shipped representation, architecture, compiler/VM evidence and engine support probe. | Minimal engine choice, output kind and supported subset. | Installation, format parsing, instruction decoding and decompilation are distinct support claims. |
+| `verify_decompilation` | Engine output and matching original instruction/IR ranges with selected claims. | Checked control/data/exception paths and unsupported or contradictory interpretations. | Readability, successful parsing, or recompiled syntax alone does not establish equivalent behavior. |
+| `recover_language_metadata` | Native/VM artifact and compatible demangler, debug/runtime metadata or type reader. | Available names/types/source mappings with original records and coordinates. | Preserve compiler/build identity; symbol decoration and output syntax do not prove source language. |
+| `analyze_rust_constructs` | Native Rust code, compiler/runtime evidence and compatible Rust-aware/native analysis. | Trait, enum, generic, closure, cleanup or async-state hypotheses tied to instructions. | Verify actual layouts, niches, ABI and dispatch; erased lifetimes and optimized constructs may be unrecoverable. |
+| `analyze_cpp_runtime_structures` | ABI-qualified native code, RTTI/vtables and exception/unwind records. | Type/dispatch candidates, object adjustments and exception paths. | Check call instructions, subobject offsets and landing pads; stripped metadata is an explicit gap. |
+| `decompile_versioned_bytecode` | VM/version-qualified method bytes, metadata and supported decompiler. | Source-like output, instruction mappings and unsupported bodies. | Compare decisive opcode, stack and exception semantics; runtime language support alone is insufficient. |
+| `inspect_lua_variant` | Identified Lua, LuaJIT or Luau container and matching decoder. | Instructions, constants, closures and supported source reconstruction. | Do not interchange opcode tables, chunk formats or decompilers across variants. |
+| `inspect_dart_aot` | Compatible Flutter/Dart native image and required matching runtime data. | Recovered object/type metadata and native method candidates. | Bind exact build, runtime and architecture; metadata extraction is not complete Dart decompilation. |
+| `inspect_unity_il2cpp` | Matching native binary and IL2CPP metadata with compatible parser. | Type/method records, native address mappings and available body interpretation. | Detect version/registration mismatches and distinguish stub assemblies from recovered method bodies. |
+| `inspect_hermes_bytecode` | HBC bytes and compatible versioned parser/disassembler. | Functions, constants, instruction flow and partial higher-level output. | Preserve HBC version and incomplete control flow; output may not be valid JavaScript. |
+| `inspect_beam_artifact` | BEAM module and compatible chunk/debug-info decoder. | Available abstract forms, metadata or VM instructions. | Missing debug information remains absent; invoking a debug-info backend can execute code. |
+| `inspect_legacy_vm` | Identified SWF/ABC, YARV, PHP or other legacy/runtime-specific artifact. | Supported instruction/resource inventory and any checked reconstruction. | Require format/version support; unrelated runtime tools cannot substitute for a decoder. |
+| `inspect_jit_specialization` | Exact runtime, selected method/type specialization and matching captured code/IR. | Generated representation and code mapping for the selected compilation context. | Loading or compiling definitions can execute code; retain code lifetime, invalidation and unsupported runtime state. |
+| `recover_vm_semantics`, `validate_vm_decoder` | Interpreter/dispatch code, virtual state model, known instruction cases and limits. | Documented opcode subset or differential fixture outcomes. | Unknown instructions and unmodeled side effects remain explicit; do not infer whole-VM equivalence. |
+
+## Platform, kernel, and device-code analysis
+
+Method: [Platform and kernel](platform-and-kernel.md).
+
+| Operation | Input and method | Result | Check or limit |
+| --- | --- | --- | --- |
+| `capture_platform_trace` | Selected process/kernel events, compatible tracer, filters, finite window and positive control. | Located events, source identities, capture settings and loss counts. | PID reuse, dropped events, privileges, observer effects and clock domains constrain conclusions. |
+| `inspect_kernel_state` | Compatible live/dump state, exact kernel/modules, symbols and bounded queries. | Typed object/state observations with raw addresses and missing data. | Validate build and layout; inconsistent live snapshots or stale pointers remain visible. |
+| `analyze_driver_interface` | Driver image, ABI, dispatch/control-code candidates and matching observations where available. | Interface paths, buffer/state handling and lifecycle relationships. | Check native calling convention, request layout, permissions and completion/cleanup paths. |
+| `inspect_ebpf_program` | Object or captured translated/JIT program with BTF, map and kernel context. | Instructions, relocations, helpers, maps and hook relationships. | Separate ELF, relocated, translated and JIT forms; verification is not proof of intended behavior. |
+| `inspect_gpu_binary`, `inspect_shader_ir` | Exact cubin/PTX or shader module, target ISA/IR environment and host bindings. | Kernel/entry-point instructions, resource uses and host/device boundaries. | PTX and SASS differ; preserve workgroup/launch settings, specialization constants and unresolved bindings. |
+
+## Specialist firmware and physical interfaces
+
+Method: [Firmware specializations](firmware-specializations.md).
+
+| Operation | Input and method | Result | Check or limit |
+| --- | --- | --- | --- |
+| `map_peripheral_registers` | Exact part/revision schema, memory map and located accesses. | Register/field annotations with access and side-effect semantics. | Validate schema against the part and observed initialization; register names do not establish behavior. |
+| `inspect_rtos_state` | Firmware or captured memory with matching RTOS types/configuration. | Supported tasks, queues, interrupts, stacks and scheduler relationships. | Check offsets and initialized objects; static allocations and observed runtime state differ. |
+| `analyze_firmware_trust_boundary` | Boot/configuration state and secure/nonsecure, privilege or guest/host crossing. | Located boundary, validation/access-control path and enforcement evidence. | Configured permissions and static intent need separate checks from observed enforcement. |
+| `reconstruct_flash_filesystem` | Raw image, NAND geometry/OOB/ECC/bad-block information and compatible decoder. | Logical regions/files with physical provenance and unrecovered extents. | ECC stripping, bad-block handling and missing pages can change mappings and apparent contents. |
+| `inspect_acpi_tables` | Identified ACPI tables, compatible ACPICA tools and hardware context. | AML/table interpretation, references and reported diagnostics. | Validate table lengths/checksums and coordinate mapping; static decoding does not execute AML. |
+| `decode_usb_transactions`, `decode_bluetooth_capture` | Capture with exact layer, device/session identity and decoder. | Transactions or HCI/link observations with timing and gaps. | Host-controller records are not complete physical-bus or over-the-air captures; encrypted layers may remain opaque. |
+| `decode_hardware_execution_trace` | Raw trace, source/packet configuration, supported decoder and exact code/load context. | Instruction ranges or instrumentation events with packet references and gaps. | Check synchronization, trace IDs, overflow and a known event; instrumentation is not complete instruction coverage. |
+| `analyze_rf_capture` | Recorded IQ/signal samples, sample rate, center frequency, gain and channel context. | Bounded modulation/framing hypotheses and decoded supported fields. | Check calibration, clipping, aliasing, known stimuli and independent frames; transmission is a separate action. |
+| `inspect_fpga_logic` | Supported HDL/netlist or family-specific decoded bitstream and target libraries. | Logic/state/interface interpretation and selected simulation checks. | Yosys/Verilator do not generically recover arbitrary vendor bitstreams. |
+| `inspect_plc_artifact` | Controller family, exact vendor/runtime format, project or acquired code and task configuration. | Supported program/task/retained-state relationships. | Preserve scan order, I/O mapping and format limitations; offline inspection does not require controller writes. |
+| `compare_physical_measurements` | Instrument configuration, baseline, bounded stimulus and repeated synchronized captures. | Measured differences, controls and supported behavior hypotheses. | Timing, noise, calibration and trigger alignment constrain attribution; failures need concrete classification. |
+
+## Transformations, protocols, and coverage
+
+Methods: [Binary transformations](binary-transformations.md), [protocols](protocol-and-data-formats.md), and [coverage](coverage-map.md).
+
+| Operation | Input and method | Result | Check or limit |
+| --- | --- | --- | --- |
+| `identify_binary_transform` | Original bytes, bounded signatures/structure and known format rules. | Packer/encoding candidates and proposed recovery chain. | Entropy and signature labels need parser or instruction corroboration. |
+| `unpack_binary_copy` | Supported transform, immutable original and separate output with bounded resources. | Recovered copy and transformation provenance. | Confirm output structure and code; runtime dumping has different effects from static decoding. |
+| `rebuild_binary_copy` | Explicit byte/structural change, exact input preconditions, format-aware editor/assembler and new output. | Modified copy, changed ranges, relocation and integrity effects. | Independently parse/decode and check required behavior; signing/boot integrity may be invalidated. |
+| `emulate_instruction_snippet` | Exact bytes, CPU mode, memory/register state, hooks and step/time limits. | Final/trace state, writes and completion reason. | Unsupported instructions, faults and modeled services stay explicit; an instruction engine supplies no complete OS. |
+| `recover_protocol_model` | Layer-qualified captures, varying samples and framing/schema/state hypotheses. | Checked fields, state transitions, constraints and replay fixtures. | Reassemble before interpretation; round trips alone do not validate independent field meaning. |
+| `validate_protocol_model` | Proposed model, held-out and malformed cases, matched target/decoder and finite replay scope. | Per-case parse/state/response outcomes and counterexamples. | Retain loss, encryption, reset and external-state differences; scope active replay to the selected target. |
+| `assess_analysis_coverage` | Required results, target/representation inventory and documented/available/checked evidence. | Coverage by boundary with unresolved dependencies and next minimal checks. | A catalogue entry is not engine availability or a successful target check; unknown never counts as passed. |
+
 ## Selection and verification
 
 The [capability matrix](capability-index.md) starts from the question; this catalogue identifies the primitives behind the selected result. [Toolkit assembly](assembly-patterns.md) describes composition. The [firmware methods](firmware.md) also cover boot reconstruction, MCU/RTOS analysis, UEFI, delta updates, and logical partitions beyond basic scanning and extraction.

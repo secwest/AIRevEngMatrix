@@ -1,0 +1,37 @@
+schema_version: 1
+kind: platform_trace
+record_state: draft
+question: null
+mode: null # process, kernel, ebpf, gpu, or shader
+target:
+  process_start_identity: null
+  kernel_or_driver_build: null
+  modules_and_digests: []
+  device_or_program_identity: null
+  isa_or_ir_environment: null
+  symbols_or_btf_identity: null
+engine:
+  name: null
+  version: null
+  availability_and_permission: null
+  argv: []
+capture:
+  providers_or_probes: []
+  filters_and_child_policy: null
+  clock_and_time_window: null
+  buffers_sampling_and_limits: null
+  dropped_events: unknown
+  positive_control: null
+  positive_control_outcome: unobserved
+  perturbation_and_cleanup: null
+analysis:
+  address_and_load_maps: []
+  argument_abi_or_bindings: null
+  requested_events_or_structures: []
+  raw_outputs: []
+  correlation_checks: []
+result:
+  outcome: unobserved
+  completeness: unknown
+  decisive_observations: []
+  limitations: []

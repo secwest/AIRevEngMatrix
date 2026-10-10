@@ -1,0 +1,42 @@
+schema_version: 1
+kind: protocol_study
+record_state: draft
+question: null
+capture:
+  path: null
+  sha256: null
+  layer_and_endpoints: null
+  clock_window_filters_loss: null
+  session_identity: null
+decoder:
+  engine_and_version: null
+  schema_and_digest: null
+  negotiated_version: null
+  reassembly_and_overlap_policy: null
+  missing_ranges: []
+  transforms_and_keys_provenance: []
+  parse_and_output_limits: null
+model:
+  messages_and_packet_references: []
+  field_hypotheses: []
+  length_checksum_encoding_rules: []
+  states_and_prerequisites: []
+  errors_timeouts_reconnects: []
+validation:
+  known_state_captures: []
+  independent_decode: unobserved
+  round_trip_if_supported: unobserved
+  replay_endpoint_and_permitted_effects: null
+  replay_rate_and_limits: null
+  replay_result: unobserved
+fingerprint:
+  observable_feature: null
+  preconditions_and_intermediaries: null
+  controls_and_repeatability: []
+  attribution_scope: null
+result:
+  outcome: unobserved
+  completeness: unknown
+  confirmed_fields_and_transitions: []
+  competing_interpretations: []
+  limitations: []

@@ -1,0 +1,30 @@
+schema_version: 1
+kind: coverage_assessment
+record_state: draft
+requested_result: null
+target_artifacts_and_identities: []
+representations_present: []
+requirements:
+  - question: null
+    representation: null
+    method_reference: null
+    selected_engine: null
+    documentation_status: unassessed
+    engine_availability: unprobed
+    fixture_check: unobserved
+    target_check: unobserved
+    falsifiable_check: null
+    decisive_evidence: []
+    remaining_gap: null
+boundary_checks: [] # File/load, language/native, kernel, peripheral, capture/message, rebuild
+unsupported_extensions:
+  - target_or_format: null
+    available_facts: []
+    missing_decoder_hardware_or_state: null
+    bounded_extension_needed: null
+result:
+  outcome: unobserved
+  supported_scope: []
+  partial_scope: []
+  unavailable_scope: []
+  out_of_scope: []

@@ -1,0 +1,43 @@
+schema_version: 1
+kind: behavior_fixtures
+source: rust-patterns.rs
+source_language: rust
+edition: "2021"
+dependencies: standard_library_only
+build_profiles:
+  - name: debug
+    rustc_args: ["--edition=2021", "-C", "opt-level=0", "-C", "debuginfo=2"]
+  - name: optimized
+    rustc_args: ["--edition=2021", "-C", "opt-level=2", "-C", "strip=symbols"]
+comparison:
+  stdout_normalization: crlf_to_lf
+  stderr: ""
+  exit_code: 0
+cases:
+  - id: missing
+    argv: []
+    stdout: "err:missing\n"
+  - id: zero
+    argv: ["0"]
+    stdout: "ok:7\n"
+  - id: ordinary
+    argv: ["8"]
+    stdout: "ok:15\n"
+  - id: maximum_success
+    argv: ["248"]
+    stdout: "ok:255\n"
+  - id: arithmetic_overflow
+    argv: ["249"]
+    stdout: "err:overflow\n"
+  - id: parse_range
+    argv: ["256"]
+    stdout: "err:invalid\n"
+  - id: parse_text
+    argv: ["invalid"]
+    stdout: "err:invalid\n"
+analysis_checks:
+  - Bind parse_input and the result cases to actual instructions.
+  - Inspect the checked addition and its error return.
+  - Identify whether the selected build retains an indirect trait call.
+  - Record enum and ABI hypotheses without assuming a fixed layout.
+  - Distinguish behavior validation from successful decompiler reconstruction.

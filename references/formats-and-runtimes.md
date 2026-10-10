@@ -42,6 +42,8 @@ Template: [runtime study](../assets/templates/runtime-study.yaml), family `wasm`
 4. Resolve host imports against the actual embedding application or documented runtime. Memory reads/writes and external effects across that boundary require an ABI and ownership interpretation.
 5. If execution is required, select a compatible runtime and provide the exact imports, limits, and inputs. A validated module can still trap or behave differently under another host implementation.
 
+For readable pseudocode, [WABT](https://github.com/WebAssembly/wabt) includes `wasm-decompile`; check feature support and keep its output mapped to the original module. It does not restore the original Rust, C, or other source language.
+
 **Deliverable:** interface and code explanation, decisive instruction/index locations, host-boundary dependencies, and optional runtime checks. Text output is a representation of the module, not recovered high-level source.
 
 ## JVM classes and archives
@@ -50,7 +52,7 @@ Template: [runtime study](../assets/templates/runtime-study.yaml), family `jvm`.
 
 Inventory JAR/ZIP members, multi-release variants, nested archives, manifest entries, class versions, and native libraries. Select the class variant corresponding to the target runtime. Resolve methods using class identity, name, and descriptor; overloads and bridge/synthetic methods remain distinct.
 
-Use Vineflower for readable reconstruction and retain the exact options, dependency classpath, diagnostics, and input/output mapping. Check decisive branches, exception tables, invokedynamic/bootstrap relationships, and field/method references against bytecode. Static initializers, reflection, classloader behavior, and JNI form runtime boundaries. Static inspection does not initialize classes or launch a JAR.
+Use Vineflower or [CFR](https://www.benf.org/other/cfr/) for supported readable reconstruction and retain the exact options, dependency classpath, diagnostics, and input/output mapping. Check decisive branches, exception tables, invokedynamic/bootstrap relationships, and field/method references against bytecode. Static initializers, reflection, classloader behavior, and JNI form runtime boundaries. Static inspection does not initialize classes or launch a JAR. The [language guide](language-decompilation.md) distinguishes Java-shaped output from recovery of original Kotlin/Scala constructs.
 
 **Deliverable:** class/method inventory, reconstructed code, descriptor-anchored call paths, unresolved dynamic dependencies, and bytecode checks. A successfully recompiled reconstruction is an additional check, not proof of equivalent behavior.
 
@@ -62,7 +64,7 @@ Identify the packaging layer and bytecode implementation/version first. Preserve
 
 Inspect headers, code objects, constants, names, nested functions, imports, instruction offsets, exception structures, and line information using supported version semantics. Avoid importing recovered modules to inspect them. Bytecode and marshal-like structures remain untrusted parser inputs. Adaptive instructions and inline caches make naive opcode arithmetic unreliable across versions.
 
-Build function/module relationships from code-object identities and instruction references. Treat source decompilation as a separate optional engine whose version support must be established. Native extensions and dynamic imports route to the corresponding analysis family.
+Build function/module relationships from code-object identities and instruction references. Select pycdc, uncompyle6 or decompyle3 only when the engine supports the actual bytecode version and relevant constructs; xdis disassembly support does not imply source recovery. The [VM guide](virtual-machines.md) covers engine/version selection and packaged bytecode. Native extensions and dynamic imports route to the corresponding analysis family.
 
 **Deliverable:** package/module inventory, version-qualified disassembly, code-object relationships, and reconstruction limits. Unsupported bytecode remains explicitly unsupported.
 

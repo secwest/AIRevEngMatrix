@@ -20,16 +20,25 @@ Start with the result the user wants: a function explanation, recovered source, 
 | When the question concerns | Read |
 | --- | --- |
 | Native executables, Apple bundles, native UI, crashes, binary layout, EVM bytecode | [Native and artifacts](references/native-and-artifacts.md) |
+| Language identification, decompiler selection, C/C++ or other compiled language reconstruction | [Language and decompiler guide](references/language-decompilation.md) |
+| Rust traits, enums, generics, async state machines, panic paths or stripped binaries | [Rust reverse engineering](references/rust-reverse-engineering.md) |
+| Python/Lua bytecode, Dart/Flutter, Unity IL2CPP, Hermes, BEAM, JIT specializations, legacy or custom VMs | [Virtual machines](references/virtual-machines.md) |
 | JavaScript packages, Electron, web pages, CDP, browser scenarios, source maps, network captures | [JavaScript and web](references/javascript-and-web.md) |
 | .NET, Android APKs and devices, JEB | [Managed and mobile](references/managed-mobile-firmware.md) |
 | Firmware images, flash dumps, boot chains, embedded Linux, MCU/RTOS or UEFI code, updates, and hardware-assisted analysis | [Firmware](references/firmware.md) |
 | Firmware execution models, flash/debug acquisition, hardware signals, or CAN decoding | [Firmware lab](references/firmware-lab.md) |
+| Register maps, RTOS types, trust boundaries, raw flash, USB/Bluetooth/RF, hardware trace, FPGA, PLC or physical measurements | [Firmware specializations](references/firmware-specializations.md) |
+| Process/kernel traces, drivers, eBPF, GPU binaries or shader IR | [Platform and kernel](references/platform-and-kernel.md) |
+| Unpacking, assembly, binary rebuilding or bounded instruction emulation | [Binary transformations](references/binary-transformations.md) |
+| Protocol framing, schema recovery, state machines, replay or remote fingerprints | [Protocols and data formats](references/protocol-and-data-formats.md) |
 | Fuzzing, failure minimization, symbolic paths, or dynamic input influence | [Testing and constraints](references/testing-and-constraints.md) |
 | Custom binary formats, WebAssembly, JVM, Python bytecode, or Go metadata | [Formats and runtimes](references/formats-and-runtimes.md) |
 | Function matching, component inventory, capability/string discovery, system memory, or recorded execution | [Matching and runtime artifacts](references/matching-and-runtime-artifacts.md) |
 | Process runs, protocol behavior, comparisons, reconstruction and verification | [Process and reconstruction](references/process-and-reconstruction.md) |
 
 Use [analysis templates](references/templates.md) for repeatable acquisition, experiments, harnesses, or reports. Copy only the relevant assets into the task workspace. Their YAML files are working specifications, not executable tool configurations; unknown fields remain unknown until checked. Keep engine-specific code limited to the selected result.
+
+For broad or multi-target investigations, use the [coverage map](references/coverage-map.md) to enumerate required representations and boundaries. Keep documented methods, engine availability, fixture checks, and target checks separate. Extend only the missing route needed for the requested result.
 
 ## Design invariants
 

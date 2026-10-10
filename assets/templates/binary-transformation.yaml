@@ -1,0 +1,37 @@
+schema_version: 1
+kind: binary_transformation
+record_state: draft
+question: null
+intended_change_or_reconstruction: null
+input:
+  path: null
+  sha256: null
+  format_architecture_mode: null
+  image_and_load_map: null
+operation:
+  kind: null # unpack, rebuild, assemble, file_patch, or emulated_snippet
+  engine_and_version: null
+  argv: []
+  source_coordinate: null
+  expected_original_bytes: null
+  replacement_or_transform: null
+  output_path: null
+dependencies:
+  relocations_and_references: []
+  abi_alignment_permissions: null
+  checksums_and_signatures: []
+  external_calls_or_stubs: []
+  initial_state_and_execution_limits: null
+checks:
+  original_byte_precondition: unobserved
+  complete_output_reparse: unobserved
+  independent_instruction_decode: unobserved
+  mapping_and_branch_targets: unobserved
+  behavior_cases: []
+result:
+  outcome: unobserved
+  output_sha256: null
+  changed_ranges: []
+  additional_tool_induced_changes: []
+  integrity_state: null
+  limitations: []

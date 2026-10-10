@@ -1,0 +1,48 @@
+schema_version: 1
+kind: virtual_machine_study
+record_state: draft
+question: null
+target:
+  container: null
+  container_sha256: null
+  bytecode_or_snapshot: null
+  bytecode_sha256: null
+  paired_native_image: null
+  paired_native_sha256: null
+  vm_family: null
+  vm_revision: null
+  format_version_and_flags: null
+engine:
+  name: null
+  version: null
+  compatibility_probe: null
+  argv: []
+inventory:
+  functions_or_prototypes: []
+  constants_and_strings: []
+  imports_exports_native_boundaries: []
+  exception_and_debug_records: []
+  unsupported_or_unknown_opcodes: []
+custom_decoder:
+  dispatch_and_virtual_pc: null
+  stack_or_register_model: null
+  opcode_semantics: []
+  next_pc_and_exception_rules: null
+jit:
+  method_and_type_specialization: null
+  compilation_context: null
+  generated_code_identity_and_lifetime: null
+  ir_kind_and_code_mapping: null
+checks:
+  bytecode_to_output_mapping: unobserved
+  paired_build_identity: unobserved
+  known_opcode_cases: []
+  malformed_or_unknown_cases: []
+  interpreter_initialization_effects: null
+  concrete_replay: unobserved
+result:
+  outcome: unobserved
+  output_kind: null
+  completeness: unknown
+  raw_outputs: []
+  limitations: []

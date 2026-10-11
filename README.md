@@ -192,7 +192,8 @@ The [template guide](references/templates.md) links copyable working records and
 | Recover a format or inspect another runtime | [Format study](assets/templates/format-study.yaml), [runtime study](assets/templates/runtime-study.yaml) |
 | Compare builds, inventory components, or inspect runtime state | [Comparison/inventory](assets/templates/comparison-inventory.yaml), [memory/replay](assets/templates/memory-replay.yaml) |
 | Build a small declarative parser | [Synthetic Kaitai schema](assets/templates/framed-record.ksy), [positive and negative fixtures](assets/templates/framed-record-fixtures.yaml) |
-| Select a decompiler or inspect a VM | [Decompilation study](assets/templates/decompilation-study.yaml), [VM study](assets/templates/virtual-machine-study.yaml) |
+| Select a decompiler or inspect a VM | [Decompilation study](assets/templates/decompilation-study.yaml), [VM study](assets/templates/virtual-machine-study.yaml), [custom VM recovery](assets/templates/custom-vm-example.yaml) |
+| Record an EVM run or an ADB device session | [EVM execution](assets/templates/evm-execution.yaml), [ADB device session](assets/templates/adb-device-session.yaml) |
 | Assess an entire compiler/runtime route | [Environment study](assets/templates/environment-study.yaml), [source fixtures and build profiles](references/environment-fixtures.md) |
 | Trace a platform or analyze specialist hardware | [Platform trace](assets/templates/platform-trace.yaml), [hardware scope](assets/templates/hardware-scope.yaml) |
 | Unpack, rebuild, or recover a protocol | [Binary transformation](assets/templates/binary-transformation.yaml), [protocol study](assets/templates/protocol-study.yaml) |

@@ -1,0 +1,43 @@
+schema_version: 1
+kind: evm_execution
+record_state: draft
+question: null
+# Records a bounded EVM execution or observation used to check a behavior
+# hypothesis from static disassembly. Pairs with the EVM section of
+# specialized-development-environments.md and the evm-dispatch fixture.
+contract:
+  address_or_label: null
+  bytecode_sha256: null
+  bytecode_kind: null       # runtime, init/creation, or a library
+  source_or_abi_available: unknown
+  proxy_or_delegate: null   # implementation address and storage layout if a proxy
+chain_context:
+  network_or_fork: null     # mainnet, a named testnet, or a local fork at a block
+  fork_block: null
+  evm_version_rules: null   # e.g. shanghai, cancun (opcode/gas rules differ)
+  node_or_tool: null        # the client/tool used, with version
+invocation:
+  caller: null
+  value_wei: null
+  calldata_hex: null        # includes the 4-byte selector
+  selector: null            # a signature-DB candidate, not a decoded name
+  gas_limit: null
+  block_env: null           # timestamp, number, basefee, coinbase as relevant
+observation:
+  return_or_revert: null    # return data, or the revert reason/selector
+  storage_reads_writes: []  # slot, before, after
+  events_logs: []           # topics and data
+  traces: null              # opcode/call trace artifact reference
+checks:
+  selector_dispatch_matches_static: unobserved  # JUMPI target reached matches the static dispatch
+  decisive_branch_observed: unobserved
+  revert_vs_success_as_expected: unobserved
+  state_dependent_paths_noted: unobserved
+result:
+  outcome: unobserved
+  limitations: >
+    An RPC or local-fork observation covers the selected caller, value,
+    calldata, and block only; it is not proof of every state-dependent path.
+    A selector maps to a human-readable signature only through a database, which
+    does not uniquely establish the ABI or parameter names. Proxy delegation and
+    storage layout are separate interpretations.

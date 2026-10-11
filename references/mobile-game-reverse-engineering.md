@@ -15,7 +15,7 @@ These ecosystems combine code with engine-specific metadata and resources. The c
 
 ## Dart and Flutter
 
-Identify JIT/kernel data versus native AOT and retain the matching engine, application image, snapshot data and package resources. For Blutter, probe target and Dart-version compatibility before setup; its workflow can fetch and build matching Dart runtime code. Record those dependencies and generated artifacts.
+Identify JIT/kernel data versus native AOT and retain the matching engine, application image, snapshot data and package resources. A Dart snapshot begins with the magic constant `0xDCDCF5F5`, serialized in host (little-endian) order as bytes `F5 F5 DC DC`, then an int64 length and an int64 kind (`kFull`=0, `kFullJIT`=1, `kFullAOT`=2, `kModule`=3) in a 20-byte header; a per-build version/"snapshot hash" string follows, and the VM rejects a snapshot whose hash does not match the loading engine. Read that hash from the artifact to pin the Dart/Flutter SDK before selecting Blutter; it changes per build and is not portable. For Blutter, probe target and Dart-version compatibility before setup; its workflow can fetch and build matching Dart runtime code. Record those dependencies and generated artifacts.
 
 Recover object pools, class/function metadata and native addresses where supported. Check tagged values, pointer representation, allocation calls, async state and generic/type metadata against instructions. Trace platform channels and FFI into their actual native handlers. Obfuscation, tree shaking and inlining can erase source boundaries.
 

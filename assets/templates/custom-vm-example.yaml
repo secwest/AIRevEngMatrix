@@ -1,0 +1,57 @@
+schema_version: 1
+kind: custom_vm_recovery
+record_state: draft
+question: null
+# Records the recovery of a custom/obfuscated bytecode VM's semantics: the
+# dispatch mechanism, a bounded opcode table, and a differential check of a
+# decoder against the real interpreter. Pairs with the custom-VM method in
+# virtual-machines.md. The opcode rows below are an illustrative shape, not a
+# recovered real VM.
+target:
+  binary_sha256: null
+  bytecode_blob_sha256: null
+  architecture_and_abi: null
+  interpreter_entry: null        # address of the dispatch loop
+dispatch:
+  mechanism: null                # switch table, computed goto, threaded, handler array
+  opcode_field: null             # where in the instruction the opcode is read
+  operand_encoding: null         # fixed or variable width; how operands are fetched
+  program_counter_update: null   # how next-PC is computed (fallthrough, jump, table)
+  vm_state: null                 # registers/stack/flags/memory the handlers touch
+opcode_table: []
+  # One row per recovered opcode. Keep unknown opcodes explicit; do not guess.
+  # Illustrative shape:
+  #   - opcode: 0x01
+  #     mnemonic: push_imm
+  #     width_bytes: 2
+  #     operands: [imm8]
+  #     effect: "push imm8 onto the VM stack"
+  #     next_pc: "pc + 2"
+  #     handler_addr: null
+  #     evidence: "decisive handler instructions"
+  #   - opcode: 0x1f
+  #     mnemonic: unknown
+  #     status: undecoded          # recovery stops or marks the region; no guessed semantics
+decoder:
+  implementation: null           # the recovered decoder/disassembler
+  coverage: null                 # which opcodes it handles
+differential_check:
+  # Run known inputs through both the recovered decoder/emulator and the real
+  # interpreter (in an isolated harness) and compare observable state.
+  cases: []                      # input, expected_vm_state_or_output, source: decoder | interpreter
+  agreements: []
+  disagreements: []
+checks:
+  dispatch_mechanism_confirmed: unobserved
+  opcode_handlers_bound_to_instructions: unobserved
+  differential_cases_agree: unobserved
+  unknown_opcodes_explicit: unobserved
+result:
+  outcome: unobserved
+  recovered_opcode_fraction: null
+  limitations: >
+    A documented opcode subset covers only the exercised instructions. Unknown
+    opcodes remain explicit undecoded regions, never guessed. Differential
+    agreement holds for the tested inputs and the observed interpreter build;
+    anti-analysis checks, self-modification, or input-dependent handlers can
+    change behavior outside those cases.

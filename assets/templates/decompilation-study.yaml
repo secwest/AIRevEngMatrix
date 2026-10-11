@@ -19,6 +19,14 @@ engine:
   plugins: []
   supported_target_probe: null
   output_kind: null # original_text, metadata, pseudocode, presentation, reconstruction
+jeb: # Only when the engine is JEB; a licensed engine with its own identities.
+  client_and_version: null
+  project_identity: null        # the opened project or import
+  units_enumerated: []          # unit IDs from the documented API
+  item_ids: []                  # retained item IDs for the cited results
+  raw_decompiler_output: null
+  # A JEB-specific claim requires JEB item IDs; another engine's output on the
+  # same target does not support it.
 supporting_data:
   symbols_and_debug_identities: []
   demangler_and_version: null

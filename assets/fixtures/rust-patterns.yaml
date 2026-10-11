@@ -50,3 +50,33 @@ analysis_checks:
   - Identify whether the selected build retains an indirect trait call.
   - Record enum and ABI hypotheses without assuming a fixed layout.
   - Distinguish behavior validation from successful decompiler reconstruction.
+
+observed_on_reference_build:
+  # Answers recorded from an actual build so the checks above are falsifiable.
+  # These describe this toolchain/target; confirm against the instructions of
+  # the build under analysis before relying on them elsewhere.
+  toolchain: "rustc 1.95.0"
+  target: x86_64
+  findings:
+    - check: indirect_trait_call_retained
+      debug: yes
+      optimized: yes
+      evidence: >
+        main erases &Add to &dyn Transform through std::hint::black_box, and
+        invoke/apply carry #[inline(never)]. Both profiles keep invoke as a
+        distinct function containing an indirect call through the trait object's
+        vtable whose slot targets the Add::apply body; opt-level=2 does not
+        devirtualize it (one indirect call in the optimized asm).
+    - check: inline_never_functions_distinct
+      debug: [parse_input, invoke, apply]
+      optimized: [parse_input, invoke, apply]
+      evidence: >
+        All three remain distinct, non-inlined functions in both profiles. With
+        -C strip=symbols the optimized binary drops their names, but the call
+        structure (the indirect dispatch and the separate apply body) survives.
+    - check: checked_add_overflow_path
+      both: present
+      evidence: >
+        Add::apply lowers value.checked_add(amount) to an add that tests the
+        carry/overflow flag (setb/jo in the optimized asm) and selects the
+        Problem::Overflow return; argv "249" yields err:overflow.

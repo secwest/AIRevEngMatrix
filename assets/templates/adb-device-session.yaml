@@ -1,0 +1,49 @@
+schema_version: 1
+kind: adb_device_session
+record_state: draft
+question: null
+# Records an ADB session against one device: read operations and any
+# state-changing operations, keeping a successful transport command separate
+# from a verified application-level postcondition. Pairs with the ADB device
+# operations method in managed-mobile-firmware.md.
+host:
+  adb_version: null
+  implicit_server_start: unknown   # did this session start the adb server
+device:
+  serial: null                     # explicit serial; never rely on a default single device
+  state: null                      # device, unauthorized, offline, recovery, ...
+  build_fingerprint: null
+  android_version_api: null
+  verified_at_utc: null
+read_operations: []
+  # Entries: op, argv (literal list, never a spliced shell string), time_utc,
+  #          output_artifact, sha256, notes. Examples: inventory, getprop,
+  #          pm list packages, dumpsys, logcat (bounded), screencap.
+acquisition: []
+  # Entries for pulling bytes: remote_path, remote_size, local_path,
+  #   local_sha256, split_set_complete (true/false/unknown), time_utc.
+  # Package acquisition records every split/base APK or an explicit partial set.
+state_changes: []
+  # Entries for mutating ops, each recorded separately from reads:
+  #   op: push_file | install | uninstall | start_app | start_activity | stop_app | settings_change
+  #   argv: []            # device-shell-safe encoding (pm/am quoting differs from host shell)
+  #   authorization: null # how the operation was authorized
+  #   requested: null     # e.g. install options, data-retention on uninstall, named activity vs launcher
+  #   transport_result: null       # the adb command's own success/failure
+  #   verified_postcondition: null # installed version, process/activity state, file digest on device
+  #   partial_effect: null         # any partially applied change left visible
+secrets_handling:
+  bugreport_or_log_redaction: null # logs/bugreports can carry secrets; record selection and redaction
+checks:
+  device_identity_confirmed: unobserved
+  pulled_bytes_rehashed: unobserved
+  split_acquisition_complete: unobserved
+  transport_vs_postcondition_separated: unobserved
+result:
+  outcome: unobserved
+  limitations: >
+    A successful transport command is not a verified application-level
+    postcondition; record them separately. Access depends on device state,
+    authorization, and user/profile. Missing or incompatible splits, and
+    partially applied installs, remain explicit rather than being reported as
+    success.

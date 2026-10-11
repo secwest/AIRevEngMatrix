@@ -39,6 +39,6 @@ Representative cases cover an allocated closure, a tagged or packed value, a fai
 3. Compare high-level output to stack/memory/storage instructions. Solidity, Vyper and Yul can generate similar code; syntax is not proof of origin.
 4. Validate selected calls in a local matched state with explicit caller, value, calldata and block conditions. An RPC observation is not a complete proof of every state-dependent path.
 
-Representative cases include a dynamic ABI argument, revert, event, packed storage field and proxy/delegate boundary. Other execution formats, including non-EVM contract VMs, require their own decoder, verifier/runtime rules and fixtures; EVM tools do not supply that support.
+Representative cases include a dynamic ABI argument, revert, event, packed storage field and proxy/delegate boundary. Other execution formats, including non-EVM contract VMs, require their own decoder, verifier/runtime rules and fixtures; EVM tools do not supply that support. Template: [EVM execution](../assets/templates/evm-execution.yaml) records the bytecode identity, fork rules, caller/value/calldata/block, and the observed revert/return/storage, with an RPC observation marked as not proof of every state-dependent path.
 
 **Deliverable:** available IR/pseudocode/metadata, representation-qualified behavior, checked data/runtime contracts and the exact unsupported source-recovery scope.

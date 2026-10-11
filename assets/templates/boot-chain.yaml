@@ -1,0 +1,68 @@
+schema_version: 1
+kind: boot_chain
+record_state: draft
+question: null
+# Reconstructs an embedded Linux boot from the first documented stage to a
+# running service, and from the service to its externally visible behavior.
+# Consumes a validated region map (firmware-triage.yaml) and an extracted tree.
+image_identity:
+  package_sha256: null
+  selected_root_sha256: null      # the tree the device actually boots
+  inactive_slot_sha256: null      # recorded when A/B slots exist
+  overlay_partitions: []          # name, sha256, filesystem, mount point
+  config_partitions: []           # name, sha256, role (nvram/userdata/...)
+boot_selection:
+  kernel_command_line: null       # source: bootargs, FIT, DTB /chosen, boot header
+  root_argument: null             # root=, rootfstype=
+  init_argument: null             # init=, or /init for initramfs
+  mtd_or_partition_layout: null   # mtdparts, ubi.mtd, GPT/MBR
+  slot_logic: null                # bootcount, upgrade_available, AVB slot
+  evidence: []
+stages: []
+  # Entries, earliest first:
+  #   name: rom | spl | bootloader | kernel | dtb | initramfs | init | service
+  #   image_sha256, load_address, entry_address
+  #   config_source, handoff_to, verification_at_handoff
+  #   authority: static | observed
+init:
+  family: null                    # busybox, sysv, procd, systemd, android, vendor
+  identified_by: null
+  active_run_order: []            # scripts/units in the order established
+  enabled_by_config: []           # the check that each selected service is enabled
+service:
+  name: null
+  script_or_unit: null
+  resolved_executable: null
+  executable_sha256: null
+  architecture: null
+  interpreter: null               # PT_INTERP
+  needed_libraries: []            # DT_NEEDED; missing entries flag incomplete extraction
+  argv: []
+  user_and_capabilities: null
+  config_inputs: []
+dispatch:
+  listener_address_and_port: null
+  bound_interface: null
+  wan_reachable: unknown          # requires firewall/forwarding evidence, not just a bind
+  authentication_boundary: null
+  handler_map: []                 # request/path -> handler address, with evidence
+  tainted_sinks: []               # system/exec, nvram_set, file write, etc., with reachability
+secrets_present:                  # presence is not use; resolve the loader separately
+  credentials: []
+  keys_and_certs: []
+  tokens: []
+checks:
+  selected_root_confirmed: unobserved
+  handler_address_confirmed: unobserved     # decisive instructions at the table entry
+  reachability_confirmed: unobserved        # interface + firewall + auth boundary
+  overlay_effective_file_resolved: unobserved
+  runtime_observation: unobserved           # when a capture or device run is available
+result:
+  outcome: unobserved
+  externally_visible_behavior: null
+  unresolved: []                  # symlinks, missing libs, unconfirmed reachability
+  limitations: >
+    A file present in the shipped tree may be replaced at runtime by an overlay,
+    and a service present in a script may be disabled by configuration or bound
+    to an unreachable interface. Static paths are candidates until the listed
+    checks or a runtime observation confirm them.

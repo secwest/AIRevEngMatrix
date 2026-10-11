@@ -27,6 +27,8 @@ Start with the result the user wants: a function explanation, recovered source, 
 | JavaScript packages, Electron, web pages, CDP, browser scenarios, source maps, network captures | [JavaScript and web](references/javascript-and-web.md) |
 | .NET, Android APKs and devices, JEB | [Managed and mobile](references/managed-mobile-firmware.md) |
 | Firmware images, flash dumps, boot chains, embedded Linux, MCU/RTOS or UEFI code, updates, and hardware-assisted analysis | [Firmware](references/firmware.md) |
+| Identifying an unknown image: container/filesystem signatures, architecture, load base, and the next method per region | [Firmware triage](references/firmware-triage.md) |
+| An embedded Linux service from boot selection through init, dispatch, and externally visible behavior | [Embedded Linux services](references/embedded-linux-services.md) |
 | Firmware execution models, flash/debug acquisition, hardware signals, or CAN decoding | [Firmware lab](references/firmware-lab.md) |
 | Register maps, RTOS types, trust boundaries, raw flash, USB/Bluetooth/RF, hardware trace, FPGA, PLC or physical measurements | [Firmware specializations](references/firmware-specializations.md) |
 | Process/kernel traces, drivers, eBPF, GPU binaries or shader IR | [Platform and kernel](references/platform-and-kernel.md) |

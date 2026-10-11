@@ -9,7 +9,9 @@ The YAML records are documentation formats. No runner automatically interprets t
 | Template | Use | Method |
 | --- | --- | --- |
 | [Toolkit plan](../assets/templates/toolkit-plan.yaml) | Select minimal components, bind inputs, and define checks | [Assembly](assembly-patterns.md) |
-| [Firmware triage](../assets/templates/firmware-triage.yaml) | Identify an image, build a validated region table, and bound unpacking before emulation or device work | [Firmware](firmware.md) |
+| [Firmware triage](../assets/templates/firmware-triage.yaml) | Identify an image, build a validated region table, and bound unpacking before emulation or device work | [Firmware triage](firmware-triage.md) |
+| [Boot chain](../assets/templates/boot-chain.yaml) | Record boot-to-service reconstruction: selected root, init family, service executable, dispatch, and reachability | [Embedded Linux services](embedded-linux-services.md) |
+| [Update policy](../assets/templates/update-policy.yaml) | Separate update package claims from code checks and device enforcement | [Firmware](firmware.md) |
 | [Acquisition](../assets/templates/acquisition.yaml) | Read flash or memory with repeatability and completeness checks | [Firmware lab](firmware-lab.md) |
 | [Firmware experiment](../assets/templates/firmware-experiment.yaml) | Describe a Renode/Qiling or other bounded execution experiment | [Firmware lab](firmware-lab.md) |
 | [Bus decoding](../assets/templates/bus-decoding.yaml) | Preserve signal interpretation, CAN database identity, and known-state checks | [Firmware lab](firmware-lab.md) |

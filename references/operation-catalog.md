@@ -102,11 +102,13 @@ Method: [Android device operations](managed-mobile-firmware.md).
 
 ## Firmware
 
-Method: [Firmware](firmware.md).
+Methods: [Firmware](firmware.md), [firmware triage](firmware-triage.md), and [embedded Linux services](embedded-linux-services.md).
 
 | Operation | Input and method | Result | Check or limit |
 | --- | --- | --- | --- |
+| `triage_firmware_image` | Unidentified image; container probe, bounded signature scan, entropy windows, architecture and load-base signals. | Region map with per-region architecture, endianness, load base, and the next method selected for each. | Each region needs parser validation, two independent architecture signals, and agreeing load-base methods; a scanner hit alone is a candidate. |
 | `inspect_firmware_regions`, `extract_firmware` | Immutable image and bounded scanner/parser; selected ranges and extraction destination. | Validated candidate regions or recovered files, transforms, hashes, unknown chunks. | Scanner signatures need confirmation; decompressed coordinates keep their transformation map. |
+| `explain_embedded_service` | Extracted root filesystem with preserved metadata; init family, service script, executable and handler analysis. | Boot-to-service path: active root/overlay, enabled service, listener, handler address, reachability and auth boundary. | Separate script-present, run-order-linked, config-enabled, and listener-bound; a shipped file may be replaced by an overlay. |
 | `reconstruct_boot_chain` | Image/partition map, boot metadata, FIT/U-Boot or DTB parser, kernel/DTB or reset vector. | Ordered boot stages with load addresses, root selection, and configuration sources. | Resolve each referenced image and address; a DTB describes intended, not observed, hardware. Separate configured from observed boot. |
 | `analyze_update_policy` | Manifest, signature/verification code, slot and rollback metadata. | Signature scope, key anchor, verifier code path, board/version gates, A/B and anti-rollback behavior. | Distinguish present-in-package, checked-by-code, and observed-on-device; name OTP/eFuse/TPM/server dependencies. Metadata alone does not prove acceptance or bypass. |
 | `reconstruct_delta_update` | Payload operation list, the exact required base image, partition/extent metadata. | Reconstructed target bytes or explicit missing-base gaps, required-base identities, unsupported operations. | Verify base and target digests and extent bounds; a missing base leaves operations unresolved, and zero-fill does not recover unknown extents. |

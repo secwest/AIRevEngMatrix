@@ -186,6 +186,7 @@ The [template guide](references/templates.md) links copyable working records and
 | --- | --- |
 | Select a small toolkit and deliver a finding | [Toolkit plan](assets/templates/toolkit-plan.yaml), [finding](assets/templates/finding.md) |
 | Triage, acquire firmware, and run controlled experiments | [Firmware triage](assets/templates/firmware-triage.yaml), [acquisition](assets/templates/acquisition.yaml), [firmware experiment](assets/templates/firmware-experiment.yaml) |
+| Reconstruct an embedded Linux boot chain or an update policy | [Boot chain](assets/templates/boot-chain.yaml), [update policy](assets/templates/update-policy.yaml) |
 | Decode physical signals or CAN frames | [Bus decoding](assets/templates/bus-decoding.yaml) |
 | Test inputs and explain path conditions | [Fuzz campaign](assets/templates/fuzz-campaign.yaml), [path query](assets/templates/path-query.yaml), [test cases](assets/templates/test-cases.csv) |
 | Recover a format or inspect another runtime | [Format study](assets/templates/format-study.yaml), [runtime study](assets/templates/runtime-study.yaml) |
@@ -219,6 +220,8 @@ The repository root is a skill directory. It can be installed under the name `re
 | [JavaScript and web](references/javascript-and-web.md) | Shipped source, Electron, browser capture, and scenarios |
 | [Managed code and mobile devices](references/managed-mobile-firmware.md) | .NET, Android packages, ADB, and JEB |
 | [Firmware](references/firmware.md) | Image recovery, embedded Linux, MCU/RTOS, UEFI, boot, and updates |
+| [Firmware triage](references/firmware-triage.md) | Signature, architecture, and load-base tables with falsification checks |
+| [Embedded Linux services](references/embedded-linux-services.md) | Boot-to-service path: filesystem selection, init families, dispatch, reachability |
 | [Firmware lab](references/firmware-lab.md) | Execution models, chip/debug acquisition, signals, and CAN |
 | [Firmware fixtures](references/firmware-fixtures.md) | Known-answer uImage header and Cortex-M base-inference checks |
 | [Testing and constraints](references/testing-and-constraints.md) | Fuzz harnesses, protocol campaigns, failure replay, symbolic inputs, and taint |

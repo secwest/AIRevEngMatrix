@@ -1,0 +1,54 @@
+schema_version: 1
+kind: update_policy
+record_state: draft
+question: null
+# Separates what an update package declares from what device code checks and
+# what hardware actually enforces. Pairs with firmware-triage.yaml (how the
+# package was identified) and the update sections of firmware.md.
+package:
+  path: null
+  sha256: null
+  format: null            # android_ota, fit, swupdate, rauc, mcuboot, vendor
+  is_delta: unknown
+  required_base_identities: []  # for a delta: build/version and digest of each base
+  partitions_or_images: []      # name, role, size, digest
+signed_object:
+  what_is_signed: null    # whole image, each partition, a manifest, a hash tree
+  signature_scope: null   # exact byte ranges the signature covers
+  algorithm: null         # e.g. RSA-PKCS1-SHA256, ECDSA-P256, ed25519
+  signature_present: unknown
+key_anchor:
+  public_key_location: null   # in-package key, device keystore, OTP/eFuse, server
+  trust_root: null
+  rollback_counter_source: null  # anti-rollback: eFuse, TPM, metadata field
+verifier:
+  # The decisive distinction: present_in_package vs checked_by_code vs observed_on_device.
+  verifier_code_path: null     # function/address that performs the check
+  checks_performed: []         # signature, hash, board id, version gate, slot
+  failure_behavior: null       # reject, fall back to other slot, continue, brick
+  policy_flags: []             # debug/unlock flags that weaken or disable checks
+  authority: static            # static | observed
+slot_and_rollback:
+  ab_slots: unknown
+  active_slot_selection: null
+  anti_rollback_enforced: unknown   # requires the counter source, not just a metadata field
+  snapshot_or_merge_state: null
+reconstruction:              # only for a delta update being reconstructed
+  base_verified: unobserved
+  reconstructed_digests: []
+  unresolved_operations: []  # missing base, unsupported op; zero-fill does not recover these
+checks:
+  signature_scope_matches_code: unobserved
+  verifier_branch_located: unobserved
+  board_version_gate_located: unobserved
+  present_vs_checked_vs_observed_separated: unobserved
+  base_and_target_digests: unobserved
+result:
+  outcome: unobserved        # observed-negative vs unsupported vs unobserved
+  acceptance_claim: null     # never asserted from metadata alone
+  limitations: >
+    A signature field in a package does not prove the bootloader checks it, a
+    located verifier branch does not prove the device enforces it when a debug
+    or unlock flag is set, and anti-rollback depends on a hardware counter that
+    a read-only image review cannot confirm. Keep package claims, code checks,
+    and device observations as separate outcomes.

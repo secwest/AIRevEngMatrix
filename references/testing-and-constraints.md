@@ -25,7 +25,7 @@ The harness identifies one input boundary and an observable outcome. Its specifi
 - Completion, timeout, and failure oracles. A crash, rejected input, disconnect, watchdog reset, assertion, and semantic mismatch are separate outcomes.
 - Scope of observation, execution/time/storage limits, and the process/device cleanup method. The harness runs in the selected isolation environment; instrumentation is not itself isolation.
 
-First run a normal input and a known malformed input. Check that the intended target code executes, normal rejection is classified correctly, and repeated runs agree. A deliberately failing test fixture can validate crash collection without assuming a defect in the real target.
+First run a normal input and a known malformed input. Check that the intended target code executes, normal rejection is classified correctly, and repeated runs agree. A deliberately failing test fixture can validate crash collection without assuming a defect in the real target. The [crash-oracle fixture](../assets/fixtures/crash-oracle.yaml) is such a fixture: a deterministic x86-64 snippet that writes through an unmapped pointer, faulting (verified under Unicorn as an invalid write) at a known instruction, so the harness oracle can be confirmed to report a crash and locate it — the fault is in the fixture, not an analyzed program (see [format fixtures](format-fixtures.md)).
 
 ### AFL++ campaign
 
@@ -58,7 +58,7 @@ Template: [path query](../assets/templates/path-query.yaml).
 3. Define a positive goal and excluded states. Examples: reach a selected branch with a well-formed message, obtain a specified return value, or show that a field influences a selected write.
 4. Set limits for time, steps, active states, loops, memory, and solver queries as appropriate. Record external function summaries and unconstrained state. Avoid treating convenient defaults as actual target behavior.
 5. Retain the query, assumptions, visited/errored states, and outcome. Distinguish a satisfying witness, unsatisfiability within the model, exhausted search, timeout, and unsupported execution.
-6. Replay a witness on the concrete target or the established emulation harness. Compare the decisive branch/output, not only process exit. A mismatch invalidates the witness as evidence about that target execution and identifies a model gap.
+6. Replay a witness on the concrete target or the established emulation harness. Compare the decisive branch/output, not only process exit. A mismatch invalidates the witness as evidence about that target execution and identifies a model gap. The [path-witness fixture](../assets/fixtures/path-witness.yaml) is a worked solve-then-replay: angr solves the input (`edi == 0x67`) that reaches a guarded success block, Unicorn replays it to confirm the branch, and a near-miss input takes the else branch — with unsat, exhausted, and timeout kept as distinct outcomes (see [format fixtures](format-fixtures.md)).
 
 An angr adapter can expose loading, symbolic input creation, bounded exploration, model extraction, and replay as separate steps. Global feasibility does not follow from failure to find a path. Unsatisfiability depends on the constraints and environment model actually checked.
 

@@ -1,0 +1,51 @@
+schema_version: 1
+kind: symbolic_path_fixtures
+format: x86_64_guarded_branch
+description: >
+  A small x86-64 function with one input-dependent branch and a known satisfying
+  input, for checking a solve-then-replay pipeline end to end. A symbolic engine
+  should find an input that reaches the success block; replaying that concrete
+  input must take the same branch, and a near-miss input must not. The witness
+  below was solved with angr 10.0.3 and replayed with Unicorn 2.1.4; the decode
+  is from Capstone 5.0.7.
+code_hex: 89f883f05a83c00383f8407506b801000000c331c0c3
+disasm:   # offset, bytes, mnemonic
+  - [0, "89f8", "mov eax, edi"]
+  - [2, "83f05a", "xor eax, 0x5a"]
+  - [5, "83c003", "add eax, 3"]
+  - [8, "83f840", "cmp eax, 0x40"]
+  - [11, "7506", "jne 0x13"]
+  - [13, "b801000000", "mov eax, 1"]
+  - [18, "c3", "ret"]
+  - [19, "31c0", "xor eax, eax"]
+  - [21, "c3", "ret"]
+semantics: >
+  The input is the 32-bit value in EDI. The function returns 1 (success block at
+  offset 13) when (edi XOR 0x5a) + 3 == 0x40, else 0 (else block at offset 19).
+  Solving the equality gives edi == 0x3d XOR 0x5a == 0x67.
+symbolic_query:
+  input: "EDI (32-bit)"
+  find: "offset 13 (the success block, returns 1)"
+  avoid: "offset 19 (the else block, returns 0)"
+  solver: "angr 10.0.3 (load_shellcode amd64, state.solver.BVS over RDI)"
+expected:
+  witness_edi: "0x67"
+  decisive_branch: "jne at offset 11 falls through (ZF set) to the success block"
+  replay:
+    engine: "Unicorn 2.1.4"
+    edi_0x67_returns: 1
+    edi_0x66_returns: 0     # near-miss takes the else branch
+checks:
+  witness_solved: true
+  witness_replayed_reaches_success: true
+  near_miss_takes_else: true
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    A solved witness is one input that satisfies the modeled path constraints;
+    it is not the only such input, and the model omits any OS, library, or
+    peripheral behavior the real target would impose. The replay confirms the
+    witness on this isolated snippet from the stated initial state; reaching the
+    branch in a full program also requires the surrounding path to be feasible.
+    Unsat, exhausted, or timed-out searches are distinct outcomes, not success.

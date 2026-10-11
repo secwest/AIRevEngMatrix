@@ -39,7 +39,10 @@ fixture check and the target check as separate outcomes, as the
 | [hermes-hbc-header.yaml](../assets/fixtures/hermes-hbc-header.yaml) | Hermes HBC header | magic + release-locked version gate |
 | [il2cpp-metadata.yaml](../assets/fixtures/il2cpp-metadata.yaml) | Unity IL2CPP metadata | `0xFAB11BAF` magic + version gate |
 | [ebpf-object.yaml](../assets/fixtures/ebpf-object.yaml) | eBPF ELF object | `EM_BPF` machine, program section, instruction decode |
-| [asm-roundtrip.yaml](../assets/fixtures/asm-roundtrip.yaml) | x86-64 instruction stream | objdump-confirmed decode; encode compares semantics |
+| [asm-roundtrip.yaml](../assets/fixtures/asm-roundtrip.yaml) | x86-64 instruction stream | objdump/Capstone decode and Keystone encode |
+| [snippet-emulation.yaml](../assets/fixtures/snippet-emulation.yaml) | x86-64 snippet | Unicorn-verified registers, flags (OF≠CF), memory write |
+| [path-witness.yaml](../assets/fixtures/path-witness.yaml) | x86-64 guarded branch | angr-solved input, Unicorn replay, near-miss |
+| [crash-oracle.yaml](../assets/fixtures/crash-oracle.yaml) | x86-64 faulting snippet | deterministic fault for harness crash collection |
 | [evidence-bundle.yaml](../assets/fixtures/evidence-bundle.yaml) | portable evidence bundle | SHA-256 recompute; tamper/traversal/duplicate rejected |
 
 ## Native binaries
@@ -199,13 +202,33 @@ retransmission is not new data.
 ## Instruction decode and evidence integrity
 
 The [x86-64 fixture](../assets/fixtures/asm-roundtrip.yaml) is a seven-instruction
-stream with its decode confirmed by GNU objdump (the independent oracle in this
-environment). It supports the "validate emitted bytes with an independent decode"
-check for an assembler/disassembler round trip: the decode direction is
-confirmed here, while assembling the mnemonics back is the encode check for a
-tool such as Keystone, which may choose an equivalent encoding — so an encode
-check compares semantics, not only bytes. A correct decode does not establish the
-stream is a valid or reachable function.
+stream checked in both directions: GNU objdump and Capstone decode the bytes to
+the listed mnemonics, and Keystone assembles those mnemonics back to the exact
+stream. It supports the "validate emitted bytes with an independent decode" check
+for an assembler/disassembler round trip. For another instruction set or a
+different stream an assembler may choose an equivalent encoding, so a general
+encode check compares semantics, not only bytes. A correct decode does not
+establish the stream is a valid or reachable function.
+
+The [snippet-emulation fixture](../assets/fixtures/snippet-emulation.yaml) is an
+x86-64 routine (`mov eax, 0x7fffffff; add eax, 1; mov [rdi], eax`) whose final
+`EAX`, 4-byte memory write, and flags were produced by Unicorn and cross-checked
+with Capstone's decode. The input is chosen so signed overflow and unsigned carry
+diverge: `0x7fffffff + 1` sets `OF` and `SF` but not `CF`. A matching final state
+establishes the emulator models these instructions and flags for this bounded
+snippet and initial state, not that the code is reachable in any program.
+
+The [path-witness fixture](../assets/fixtures/path-witness.yaml) is a worked
+solve-then-replay over a guarded branch: a symbolic engine should find an input
+reaching the success block, and replaying that concrete input must take the same
+branch while a near-miss does not. The witness (`edi == 0x67`) was solved with
+angr and replayed with Unicorn (success returns 1; `0x66` returns 0). A solved
+witness is one satisfying input under the modeled path, not the only one, and
+unsat, exhausted, and timeout stay distinct outcomes. The
+[crash-oracle fixture](../assets/fixtures/crash-oracle.yaml) is a deterministic
+faulting snippet (a write through an unmapped pointer, faulting under Unicorn at
+a known instruction) for confirming a harness collects and classifies a crash;
+the fault is in the fixture, not an analyzed program.
 
 The [evidence-bundle fixture](../assets/fixtures/evidence-bundle.yaml) is a
 portable bundle with one evidence record and a manifest whose SHA-256 digests are

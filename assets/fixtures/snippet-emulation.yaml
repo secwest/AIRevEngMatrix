@@ -1,0 +1,50 @@
+schema_version: 1
+kind: emulation_fixtures
+format: x86_64_instruction_snippet
+description: >
+  A bounded x86-64 instruction snippet with a known final state, for checking a
+  snippet emulator (cite the Intel SDM Vol. 2 for ADD flag semantics). The
+  routine loads a 32-bit maximum signed value, adds one, and stores the result
+  through a pointer. The final registers, flags, and memory write below were
+  produced by Unicorn 2.1.4; the instruction decode is cross-checked with
+  Capstone 5.0.7. The case is chosen so signed overflow (OF) and unsigned carry
+  (CF) diverge: 0x7fffffff + 1 sets OF and SF but not CF.
+code_hex: b8ffffff7f83c0018907
+disasm:   # address, bytes, mnemonic
+  - [0x1000, "b8ffffff7f", "mov eax, 0x7fffffff"]
+  - [0x1005, "83c001", "add eax, 1"]
+  - [0x1008, "8907", "mov dword ptr [rdi], eax"]
+initial_state:
+  arch: x86_64
+  code_base: "0x1000"
+  rdi: "0x2000"            # destination buffer (mapped, 4 KiB)
+  rax: 0
+  rflags: "0x2"           # only the reserved bit set
+  mapped:
+    - {start: "0x1000", size: 4096, contents: code}
+    - {start: "0x2000", size: 4096, contents: zero}
+  stop: "after the last instruction (code_base + len(code))"
+expected:
+  eax: "0x80000000"
+  memory_write:
+    address: "0x2000"
+    bytes: "00000080"     # 0x80000000 little-endian
+    width: 4
+  flags:
+    OF: 1                 # signed overflow: 0x7fffffff + 1 crosses the signed max
+    SF: 1                 # result has its high bit set
+    CF: 0                 # no unsigned carry out of bit 31
+    ZF: 0
+checks:
+  emulator: "Unicorn 2.1.4 (UC_ARCH_X86, UC_MODE_64)"
+  decode_cross_check: "Capstone 5.0.7"
+  of_vs_cf_diverge: true
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    The final state holds for this snippet, initial registers, and stop
+    condition only. The snippet touches no OS or device state; an emulated
+    syscall, an unmapped access, or a different initial RDI would change the
+    outcome. A matching final state establishes the emulator models these
+    instructions and flags, not that the snippet is reachable in any program.

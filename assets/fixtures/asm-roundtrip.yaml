@@ -5,11 +5,12 @@ description: >
   A known-answer x86-64 instruction stream for checking a disassembler's decode
   and an assembler's encode against a fixed answer (cite the Intel SDM Vol. 2
   opcode maps). Each row is the exact instruction bytes and the mnemonic they
-  decode to; the decode column here was produced by GNU objdump
-  (-m i386:x86-64 -M intel) as the independent oracle. The inverse direction —
-  assembling the mnemonic back to these exact bytes — is the encode check for a
-  tool such as Keystone or llvm-mc, which were not available in this environment,
-  so only the decode direction is confirmed here.
+  decode to. Both directions were confirmed independently: GNU objdump
+  (-m i386:x86-64 -M intel) and Capstone 5.0.7 decode the bytes to the listed
+  mnemonics, and Keystone 0.9.2 assembles those mnemonics back to the exact
+  stream. An assembler may legitimately choose an equivalent encoding for some
+  mnemonics, so a general encode check compares semantics, not only bytes; for
+  this stream the two directions coincide.
 stream_hex: 554889e54883c0014801d8b8050000000f05c3
 decode:   # offset, bytes, mnemonic (Intel syntax, objdump-confirmed)
   - [0, "55", "push rbp"]
@@ -20,21 +21,22 @@ decode:   # offset, bytes, mnemonic (Intel syntax, objdump-confirmed)
   - [16, "0f05", "syscall"]
   - [18, "c3", "ret"]
 checks:
-  decode_oracle: "GNU objdump -b binary -m i386:x86-64 -M intel"
+  decode_oracle: "GNU objdump -b binary -m i386:x86-64 -M intel; cross-checked with Capstone 5.0.7"
+  encode_oracle: "Keystone 0.9.2 (KS_ARCH_X86, KS_MODE_64)"
   total_bytes: 19
   rex_w_prefix: "0x48 marks the 64-bit operand-size forms (add rax vs add eax)"
   immediate_widths: "mov eax uses a 32-bit immediate; add rax,0x1 uses a sign-extended imm8"
 expected:
   instruction_count: 7
   each_row_decodes_as_listed: true
-  reassemble_to_stream_hex: "expected of an assembler; not verified here (no Keystone/llvm-mc)"
+  reassemble_to_stream_hex: "confirmed: Keystone assembles the mnemonics back to stream_hex"
 result:
   outcome: unobserved
   parser_engine: null
   limitations: >
     A correct decode of these bytes does not establish the stream is a valid
-    function (no prologue/epilogue pairing is asserted) or reachable. The encode
-    direction is unverified in this environment; an assembler may choose a
-    different but equivalent encoding (for example a different immediate width),
-    so an encode check compares semantics, not only bytes. Other ISAs (Thumb,
-    AArch64) need their own oracle; this objdump build supports x86 only.
+    function (no prologue/epilogue pairing is asserted) or reachable. For another
+    instruction set or a different stream an assembler may choose an equivalent
+    but different encoding (for example a different immediate width), so an encode
+    check compares semantics, not only bytes. Other ISAs (Thumb, AArch64) are
+    checked with a Capstone/Keystone mode for that architecture.

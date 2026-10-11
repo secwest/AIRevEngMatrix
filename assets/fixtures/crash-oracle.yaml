@@ -1,0 +1,38 @@
+schema_version: 1
+kind: crash_oracle_fixtures
+format: x86_64_faulting_snippet
+description: >
+  A deterministic faulting x86-64 snippet, for validating a harness's crash
+  collection and classification without assuming a defect in a real target. The
+  snippet loads the address 1 and writes through it; address 1 is unmapped, so
+  the store faults. The fault was produced by Unicorn 2.1.4 (an invalid write),
+  which a real harness would see as a signal (SIGSEGV) or an equivalent OS fault;
+  the decode is from Capstone 5.0.7. Use it to confirm the crash oracle reports a
+  crash and locates the faulting instruction, before trusting zero-finding runs.
+code_hex: 48c7c001000000488900
+disasm:
+  - [0x1000, "48c7c001000000", "mov rax, 1"]
+  - [0x1007, "488900", "mov qword ptr [rax], rax"]
+fault:
+  kind: invalid_memory_write
+  accessed_address: "0x1"          # unmapped
+  faulting_instruction_offset: "0x1007"
+  emulator_error: "UC_ERR_WRITE_UNMAPPED (Unicorn errno 7)"
+  real_target_equivalent: "SIGSEGV / access violation on the store"
+expected:
+  oracle_classification: crash
+  faulting_pc: "0x1007"
+  not_a_target_defect: true        # the fault is in the fixture, not in any analyzed program
+checks:
+  fault_is_deterministic: true
+  oracle_reports_crash: unobserved # the harness under test should report crash here
+  faulting_instruction_located: unobserved
+result:
+  outcome: unobserved
+  harness_engine: null
+  limitations: >
+    This validates that a harness collects and classifies a crash and finds the
+    faulting instruction; it does not exercise a real target's input handling and
+    is not evidence of any defect in an analyzed program. A real campaign still
+    needs a checked harness, reset between inputs, and a failure oracle tuned to
+    the target's own fault modes.

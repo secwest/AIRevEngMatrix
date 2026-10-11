@@ -31,6 +31,14 @@ fixture check and the target check as separate outcomes, as the
 | [encoded-string.yaml](../assets/fixtures/encoded-string.yaml) | XOR + stack string blob | recovered key/plaintext/offset (not reachability) |
 | [evm-dispatch.yaml](../assets/fixtures/evm-dispatch.yaml) | EVM runtime bytecode | PUSH4 selector and dispatch offsets (not the signature) |
 | [go-buildinfo.yaml](../assets/fixtures/go-buildinfo.yaml) | Go buildinfo header | sentinel + version string identity |
+| [pe-resources.yaml](../assets/fixtures/pe-resources.yaml) | PE32+ resources + overlay | RVA↔file-offset mapping, leaf digest, overlay range |
+| [minidump-modules.yaml](../assets/fixtures/minidump-modules.yaml) | Minidump module list | CodeView build-id decode and mismatch refusal |
+| [dotnet-metadata.yaml](../assets/fixtures/dotnet-metadata.yaml) | .NET CLI metadata | `BSJB` root, stream directory, `#~` table bitvector |
+| [pcap-tcp-reassembly.yaml](../assets/fixtures/pcap-tcp-reassembly.yaml) | libpcap TCP stream | reassembly with a gap and a retransmission |
+| [beam-chunks.yaml](../assets/fixtures/beam-chunks.yaml) | Erlang BEAM container | IFF chunk inventory, 4-byte padding, atoms |
+| [hermes-hbc-header.yaml](../assets/fixtures/hermes-hbc-header.yaml) | Hermes HBC header | magic + release-locked version gate |
+| [il2cpp-metadata.yaml](../assets/fixtures/il2cpp-metadata.yaml) | Unity IL2CPP metadata | `0xFAB11BAF` magic + version gate |
+| [ebpf-object.yaml](../assets/fixtures/ebpf-object.yaml) | eBPF ELF object | `EM_BPF` machine, program section, instruction decode |
 
 ## Native binaries
 
@@ -115,6 +123,76 @@ uvarint-length-prefixed strings. It checks the sentinel, the pointer size, and
 the decoded version (`go1.21.0`). The sentinel and version are a reliable
 identity check from bytes; they do not establish the module dependency graph is
 intact or the binary unstripped.
+
+## PC executables, crashes, and kernel objects
+
+The [PE resources fixture](../assets/fixtures/pe-resources.yaml) is a minimal
+PE32+ with a `.text` and a `.rsrc` section and trailing overlay bytes. It checks
+the RVA-to-file-offset mapping through the section table (`file_offset =
+PointerToRawData + (rva - VirtualAddress)`), the resource leaf's RVA, file
+offset, size, and content digest, and the exact overlay byte range. The RVA
+(`0x2058`) deliberately differs from the file offset (`0x458`). The image
+`CheckSum` is computed with the documented folding algorithm and recomputes
+self-consistently, but a `CheckSum` match is not Authenticode signing, which
+lives at its own layer.
+
+The [minidump fixture](../assets/fixtures/minidump-modules.yaml) is a header,
+a module-list stream, and one module whose CodeView RSDS record carries a PDB
+GUID and age — the build id. The `valid` case decodes the build id; the
+`build_id_mismatch` case supplies a different expected symbol identity, and the
+decisive expected result is that symbolization is refused rather than applied
+against the wrong file. A matching build id makes a PDB a candidate, not an
+authenticated one; a mismatch is decisive in the negative direction.
+
+The [eBPF fixture](../assets/fixtures/ebpf-object.yaml) is an ELF64 relocatable
+with `e_machine = EM_BPF` (247), a program section holding two 8-byte
+instructions (`mov r0, 0` then `exit`), and a legacy map definition. It checks
+the ELF identity, the machine, the program section name, and the decoded
+instructions. An eBPF ELF object is a static artifact distinct from the in-kernel
+translated or JITed program; section presence does not establish the program
+loads, verifies, or attaches.
+
+## Managed metadata and other VM containers
+
+The [.NET metadata fixture](../assets/fixtures/dotnet-metadata.yaml) is a CLI
+metadata region: the `BSJB` root, the version string, the stream directory
+(`#~`, `#Strings`, `#US`, `#GUID`, `#Blob`), and the `#~` tables header with its
+`Valid` bitvector (here Module + MethodDef) and row counts, plus one resolved
+`#Strings` entry. The decisive hedge is a check: a decoded token or name does not
+establish a recoverable CIL body, every MethodDef RVA here is 0, and a Native AOT
+or ReadyToRun image would not expose ordinary CIL at this layer and routes to
+native analysis.
+
+The [BEAM fixture](../assets/fixtures/beam-chunks.yaml) is an Erlang `FOR1`/`BEAM`
+IFF container with `AtU8`, `Code`, and `ExpT` chunks. It checks the big-endian
+chunk sizes, the 4-byte chunk padding (the 17-byte `AtU8` pads to 20), and the
+decoded atoms, with a truncated-chunk error case. Chunk presence does not
+establish retained abstract forms: without `debug_info`, `beam_lib` recovers VM
+instructions, not Erlang or Elixir source.
+
+The [Hermes fixture](../assets/fixtures/hermes-hbc-header.yaml) is the React
+Native HBC file-header prefix: the 64-bit magic (`0x1F1903C103BC1FC6`,
+little-endian on disk), the bytecode version, the SHA-1 source hash, and the
+leading function/string counts. The `version_mismatch` case asserts that a
+decoder for one version must refuse another, because HBC table layouts are
+version-specific. The [IL2CPP fixture](../assets/fixtures/il2cpp-metadata.yaml)
+is the Unity `global-metadata.dat` header: the `0xFAB11BAF` magic and the version
+that gates the header layout, with the version read before any section
+offset/size pair is dereferenced. Neither fixture establishes that the paired
+binary (a Hermes bundle's segments, or IL2CPP's `libil2cpp`/`GameAssembly`)
+matches — that is checked separately.
+
+## Packet captures
+
+The [PCAP fixture](../assets/fixtures/pcap-tcp-reassembly.yaml) is a libpcap
+capture of a one-directional TCP exchange. It carries three PSH segments:
+`HELLO` at sequence 1000, a byte-identical retransmission at 1000, and `WORLD`
+at 1010 — leaving a five-byte gap (sequence 1005–1009). The checks are the
+reassembly outcome (`HELLO` + gap + `WORLD`, stream incomplete), that the
+retransmission contributes nothing new, and the explicit missing range; the IP
+and TCP checksums are real and recompute. A TCP stream with a missing segment
+stays incomplete even when a decoder recognizes later messages, and a
+retransmission is not new data.
 
 ## Using a fixture result
 

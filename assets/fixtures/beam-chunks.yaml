@@ -1,0 +1,90 @@
+schema_version: 1
+kind: bytecode_format_fixtures
+format: beam_iff_container
+description: >
+  Synthetic Erlang/OTP BEAM file for checking a BEAM container reader. BEAM is an
+  EA IFF 85 "FOR1" form (see the BEAM file format notes and OTP's beam_lib /
+  lib/stdlib and the compiler's beam_asm): the file is "FOR1", a u32 big-endian
+  size counting every byte after that size field, the 4-byte form type "BEAM",
+  then a sequence of chunks. Each chunk is a 4-byte chunk id, a u32 big-endian
+  chunk size that does NOT count padding, the chunk data, then 0-3 zero bytes of
+  padding up to the next 4-byte boundary. All IFF size fields are big-endian even
+  on a little-endian host. This fixture holds an "AtU8" atom table, a small "Code"
+  chunk, and an "ExpT" export table; a real module carries more chunks (ImpT,
+  LocT, StrT, LitT, and often debug info). Chunk presence establishes the
+  container's structure, not that any abstract forms survive inside it.
+layout:
+  endian: big # all IFF/FOR1 size fields are big-endian
+  file_header:
+    fields: # offset, size, name, meaning
+      - [0, 4, magic, "FOR1 = 46 4f 52 31 (EA IFF 85 form)"]
+      - [4, 4, form_size, "u32 BE: count of bytes after this field = file_len - 8"]
+      - [8, 4, form_type, "BEAM = 42 45 41 4d"]
+      - [12, 0, chunks, "start of the chunk sequence"]
+  chunk:
+    fields: # within each chunk
+      - [0, 4, chunk_id, "4 ASCII bytes, e.g. AtU8 / Code / ExpT / ImpT / LocT / StrT"]
+      - [4, 4, chunk_size, "u32 BE: size of chunk data, NOT counting padding"]
+      - [8, "chunk_size", chunk_data, "the chunk body"]
+      - ["8+chunk_size", "0..3", padding, "zero bytes to the next 4-byte boundary"]
+  atu8_body: # layout inside the AtU8 chunk data
+    fields:
+      - [0, 4, atom_count, "u32 BE number of atoms"]
+      - [4, "...", atoms, "each atom: 1-byte length + that many UTF-8 bytes"]
+checks:
+  # A reader must match FOR1/BEAM, read every size field big-endian, advance each
+  # chunk by chunk_size rounded up to a 4-byte boundary, and must error when a
+  # declared chunk_size exceeds the bytes remaining in the file.
+  form_size_counts: "bytes after the form_size field (file_len - 8)"
+  chunk_size_excludes_padding: true
+  chunk_alignment: 4
+  atu8_atoms_expected: [module, start]
+cases:
+  - id: valid
+    # 96-byte file: FOR1 header + AtU8 (2 atoms) + a small Code chunk + ExpT (1 export).
+    hex: 464f5231000000584245414d417455380000001100000002066d6f64756c65057374617274000000436f6465000000180000001000000000000000a9000000020000000101100212457870540000001000000001000000020000000000000001
+    expect:
+      magic_ok: true
+      magic: "464f5231" # FOR1
+      form_type: "4245414d" # BEAM
+      form_size: 88 # = file_len (96) - 8
+      file_length: 96
+      chunk_inventory: # [id, chunk_size, padded_size, offset]
+        - [AtU8, 17, 20, 12]
+        - [Code, 24, 24, 40]
+        - [ExpT, 16, 16, 72]
+      atu8_atom_count: 2
+      atu8_atoms: [module, start]
+      atu8_atoms_ok: true
+      expt_export_count: 1
+      expt_export0: # atom_index, arity, label
+        atom_index: 2 # -> "start"
+        arity: 0
+        label: 1
+  - id: truncated_chunk
+    # Identical to `valid` except the ExpT chunk's declared size (offset 76) is
+    # inflated from 0x10 (16) to 0x1010 (4112) while only 16 bytes remain. A reader
+    # must error on the over-long declared size, not read past end of file.
+    hex: 464f5231000000584245414d417455380000001100000002066d6f64756c65057374617274000000436f6465000000180000001000000000000000a9000000020000000101100212457870540000101000000001000000020000000000000001
+    expect:
+      magic_ok: true
+      chunk_id_at_offset_72: "ExpT"
+      declared_chunk_size: 4112 # 0x1010
+      bytes_remaining_after_chunk_header: 16
+      reader_must_error: true # declared_chunk_size > bytes_remaining
+result:
+  outcome: unobserved # set to recorded after a reader runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic fixture covering the FOR1/BEAM IFF container, its big-endian size
+    fields, 4-byte chunk padding, and the AtU8 atom table only. The Code chunk's
+    bytes are opaque filler after the standard sub-header and are not valid VM
+    instructions; the ExpT entry references an atom index but no real function
+    body backs it. A reader that lists these chunks establishes the container
+    structure and the atom names, not that the module is loadable or complete.
+    Chunk presence does not establish retained abstract forms: debug_info (a Dbgi
+    or abstract-code chunk) may be absent, in which case beam_lib can recover only
+    BEAM VM instructions through a disassembler, never the original Erlang or
+    Elixir source. Reading the atom table does not establish that imports,
+    literals, or string tables (ImpT, LitT, StrT) are present or intact.

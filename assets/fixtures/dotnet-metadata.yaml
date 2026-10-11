@@ -1,0 +1,161 @@
+schema_version: 1
+kind: managed_format_fixtures
+format: dotnet_cli_metadata_region
+description: >
+  Synthetic .NET CLI metadata region for checking a PE/CLI metadata parser
+  against bytes rather than an engine's label. The layout follows ECMA-335
+  (Common Language Infrastructure), Partition II "Metadata Logical Format": the
+  metadata root (II.24.2.1), the stream headers (II.24.2.2), the #~ compressed
+  tables stream and its header (II.24.2.6), the #Strings heap (II.24.2.3), and
+  the Module (II.22.30) and MethodDef (II.22.26) table rows. Every multi-byte
+  field in the metadata root, the stream directory, the #~ tables header, and
+  the table rows is stored LITTLE-ENDIAN on disk; the leading signature
+  0x424A5342 reads as the ASCII bytes "BSJB" in file order. This fixture is the
+  metadata region excerpted on its own: it is NOT a full, runnable PE image. It
+  carries no DOS/PE headers, no COR20 (CLI) header, no section table, and no
+  method-body bytes (every MethodDef RVA here is 0). The decisive point is that
+  the metadata root, the stream directory, the HeapSizes flags, and the #~ Valid
+  bitvector are byte-checkable, but a decoded token or resolved name does not
+  establish a recoverable CIL method body, and a Native AOT / ReadyToRun image
+  would not expose ordinary CIL bodies here at all.
+region_layout:
+  endian: little          # metadata root, stream directory, #~ header and rows
+  region_size_bytes: 204
+  metadata_root:          # offset (from region start), size, name, meaning
+    - [0, 4, Signature, "0x424A5342; reads as ASCII \"BSJB\" in file order"]
+    - [4, 2, MajorVersion, "metadata major version (1)"]
+    - [6, 2, MinorVersion, "metadata minor version (1)"]
+    - [8, 4, Reserved, "reserved, 0"]
+    - [12, 4, Length, "byte length of the Version field that follows (12)"]
+    - [16, 12, Version, "\"v4.0.30319\" NUL-terminated, padded to a 4-byte boundary"]
+    - [28, 2, Flags, "reserved, 0"]
+    - [30, 2, Streams, "number of stream headers that follow (5)"]
+  stream_headers:         # offset, size, name; each = Offset u32, Size u32, Name NUL-padded to 4
+    - [32, 12, "#~ header", "Offset=108 Size=56 Name=\"#~\""]
+    - [44, 20, "#Strings header", "Offset=164 Size=16 Name=\"#Strings\""]
+    - [64, 12, "#US header", "Offset=180 Size=4 Name=\"#US\""]
+    - [76, 16, "#GUID header", "Offset=184 Size=16 Name=\"#GUID\""]
+    - [92, 16, "#Blob header", "Offset=200 Size=4 Name=\"#Blob\""]
+  stream_data:            # offset, size, name (Offset/Size are from the stream directory above)
+    - [108, 56, "#~", "compressed metadata tables stream"]
+    - [164, 16, "#Strings", "string heap; index 0 empty, then \"Program\", then \"Main\""]
+    - [180, 4, "#US", "user-string heap; minimal (single 0x00)"]
+    - [184, 16, "#GUID", "GUID heap; one 16-byte GUID at index 1"]
+    - [200, 4, "#Blob", "blob heap; minimal (single 0x00 empty blob)"]
+  tables_stream_header:   # #~ internal layout, offsets relative to the #~ stream start (region offset 108)
+    - [0, 4, Reserved, "0"]
+    - [4, 1, MajorVersion, "tables schema major version (2)"]
+    - [5, 1, MinorVersion, "tables schema minor version (0)"]
+    - [6, 1, HeapSizes, "heap index width flags; 0 = #Strings/#GUID/#Blob indices are 2 bytes"]
+    - [7, 1, Reserved, "1 (ECMA-335 II.24.2.6 fixes this reserved byte to 1)"]
+    - [8, 8, Valid, "bitvector of present tables, one bit per table number"]
+    - [16, 8, Sorted, "bitvector of sorted tables; 0 in this minimal fixture"]
+    - [24, 8, Rows, "u32 row count per set Valid bit, ascending table number: [1, 1]"]
+    - [32, 10, Module_row, "table 0x00 row (Generation, Name, Mvid, EncId, EncBaseId)"]
+    - [42, 14, MethodDef_row, "table 0x06 row (RVA, ImplFlags, Flags, Name, Signature, ParamList)"]
+checks:
+  # A parser must read the little-endian signature and confirm it is "BSJB",
+  # read the version string by its Length, walk the stream directory (each
+  # header = Offset u32, Size u32, Name NUL-padded to 4), then parse the #~
+  # tables header: HeapSizes decides index width, the Valid bitvector names the
+  # present tables, and the Rows array gives one u32 count per set bit. A
+  # #Strings index resolves by reading a NUL-terminated string at that byte
+  # offset in the heap. None of these establishes a method body: a MethodDef
+  # RVA of 0 means no CIL is present at this layer.
+  signature_offset: 0
+  signature_value: 0x424A5342
+  signature_ascii: BSJB
+  signature_is_little_endian_on_disk: true
+  version_length_field: 12
+  heap_index_width_from_heapsizes: "HeapSizes=0 -> #Strings/#GUID/#Blob indices are 2 bytes"
+  table_number_module: 0x00
+  table_number_methoddef: 0x06
+  strings_index_zero_is_empty: true
+  methoddef_rva_zero_means_no_body: true
+cases:
+  - id: valid
+    # Full 204-byte metadata region. Metadata root (32 bytes) + 5 stream headers
+    # (76 bytes) + stream data (96 bytes). The #~ stream declares Module (0x00)
+    # and MethodDef (0x06), one row each; the single MethodDef has RVA 0.
+    hex: 42534a4201000100000000000c00000076342e302e33303331390000000005006c00000038000000237e0000a40000001000000023537472696e677300000000b40000000400000023555300b8000000100000002347554944000000c80000000400000023426c6f6200000000000000020000014100000000000000000000000000000001000000010000000000010001000000000000000000000096000900000001000050726f6772616d004d61696e000000000000000123456789abcdef001122334455667700000000
+    expect:
+      signature_ok: true
+      signature_hex: "42534a42"
+      signature_ascii: BSJB
+      metadata_major_version: 1
+      metadata_minor_version: 1
+      version_string: "v4.0.30319"
+      streams_count: 5
+      stream_directory:          # name -> [offset_from_region_start, size]
+        "#~": [108, 56]
+        "#Strings": [164, 16]
+        "#US": [180, 4]
+        "#GUID": [184, 16]
+        "#Blob": [200, 4]
+      tables_header:
+        major_version: 2
+        minor_version: 0
+        heap_sizes: 0            # #Strings/#GUID/#Blob indices are 2 bytes
+        reserved_byte: 1
+        valid_bitvector: "0x0000000000000041"
+        valid_tables:            # set bits -> table name
+          0x00: Module
+          0x06: MethodDef
+        sorted_bitvector: "0x0000000000000000"
+        row_counts: [1, 1]       # Module: 1 row, MethodDef: 1 row
+      module_row:
+        generation: 0
+        name_index: 1            # #Strings offset 1
+        name: Program            # resolved from #Strings
+        mvid_index: 1            # #GUID index 1 (16-byte GUID present)
+      methoddef_row:
+        rva: 0                   # no CIL method body present at this layer
+        impl_flags: 0
+        flags: "0x0096"          # Public | Static | HideBySig
+        name_index: 9            # #Strings offset 9
+        name: Main               # resolved from #Strings
+        signature_index: 0       # #Blob index 0 (empty blob in this fixture)
+      strings_resolved:
+        1: Program               # the required known string
+        9: Main
+  - id: native_aot_note
+    # NOTE case (no distinct bytes): a Native AOT or ReadyToRun image.
+    # ECMA-335 describes the CLI metadata that the "valid" case above checks.
+    # Native AOT (and the native portions of ReadyToRun) compile IL to native
+    # machine code at publish time; such an image may retain a metadata region
+    # whose root and stream directory still parse, yet its methods are present
+    # as native code, not as ordinary CIL method bodies reachable through a
+    # MethodDef RVA here.
+    applies_to: "Native AOT or ReadyToRun .NET image"
+    expect:
+      metadata_root_may_still_parse: true
+      ordinary_cil_bodies_exposed_here: false
+      route: native_analysis     # see native-and-artifacts.md path
+      hedge: >
+        A parsed metadata root and a resolved MethodDef name do NOT establish
+        that a recoverable CIL body exists for that method; for a Native AOT or
+        ReadyToRun image the method is native code and must be routed to native
+        analysis, with retained metadata and symbols used where available.
+result:
+  outcome: unobserved   # set to recorded after a parser runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    This fixture is the CLI metadata region excerpted on its own, not a full
+    assembly: it has no DOS/PE headers, no PE section table, no COR20 (CLI)
+    header pointing at this region, and no method-body bytes. It declares a
+    Module (0x00) and a MethodDef (0x06) with one row each, and the MethodDef
+    RVA is 0, so there is no CIL to decode here. A passing check establishes
+    that the metadata root ("BSJB"), the version string, the stream directory
+    (#~/#Strings/#US/#GUID/#Blob offsets and sizes), the HeapSizes index width,
+    the #~ Valid bitvector and its row counts, and one resolved #Strings entry
+    ("Program") decode as expected from these bytes. It does NOT establish that a
+    decoded token or a resolved name has a recoverable CIL method body, that the
+    assembly is loadable or verifiable, or that the containing image is
+    authentic: metadata carries no integrity field of its own, and a .NET
+    image's identity and integrity come from the PE layer and any Authenticode
+    or strong-name signature, analyzed separately. A Native AOT or ReadyToRun
+    image would not expose ordinary CIL bodies here at all and must route to the
+    native-analysis path. A matching metadata root does not establish which
+    deployment form (framework-dependent, self-contained, single-file,
+    ReadyToRun, or Native AOT) produced the real artifact.

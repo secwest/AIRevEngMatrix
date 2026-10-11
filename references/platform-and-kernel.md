@@ -40,7 +40,7 @@ Trace one requested operation from userspace request through its kernel dispatch
 
 Distinguish the input ELF/BTF object, the verifier-accepted translated program, and JIT native bytes. Record kernel version, program type, attachment, maps, BTF/CO-RE relocations, helper calls and available program identifiers. The same source/object can load differently across kernels.
 
-Use bpftool/LLVM read or dump operations appropriate to the available artifact. Loading or attaching a program changes kernel state and is a separate step. Inspect branch and map access semantics in the relevant instruction form. JIT addresses and map contents are runtime observations, not permanent file coordinates. Verifier acceptance establishes verifier constraints for that load, not general correctness.
+Use bpftool/LLVM read or dump operations appropriate to the available artifact. Loading or attaching a program changes kernel state and is a separate step. Inspect branch and map access semantics in the relevant instruction form. JIT addresses and map contents are runtime observations, not permanent file coordinates. Verifier acceptance establishes verifier constraints for that load, not general correctness. The [eBPF object fixture](../assets/fixtures/ebpf-object.yaml) checks the `EM_BPF` ELF identity, the program section, and the decoded instructions as a static artifact, encoding the distinction between the ELF object and the in-kernel translated or JITed program (see [format fixtures](format-fixtures.md)).
 
 ## GPU and shader analysis
 

@@ -1,0 +1,153 @@
+schema_version: 1
+kind: capture_fixtures
+format: libpcap_tcp_stream
+description: >
+  Synthetic classic libpcap capture (pcap file format, little-endian: global
+  header magic 0xA1B2C3D4, version 2.4, snaplen 65535, network = 1
+  LINKTYPE_ETHERNET) holding one unidirectional TCP exchange (RFC 793) from a
+  client (10.0.0.1:49152) to a server (10.0.0.2:80). Three PSH+ACK segments
+  carry an application message split across the stream. The point is transport
+  reassembly, not application decode: segment B retransmits segment A (same seq
+  and data, contributing nothing new) and segment C skips forward, leaving a
+  5-byte gap, so the reassembled stream is "HELLO" + [5-byte gap] + "WORLD" and
+  remains INCOMPLETE. IPv4 and TCP header checksums are the real computed values
+  (standard one's-complement, TCP over the RFC 793 pseudo-header), so
+  checksum_validated is true; the decisive checks are the reassembly ordering,
+  the duplicate, and the gap, not the L3/L4 checksums.
+pcap_global_header_layout:   # 24 bytes, little-endian
+  endian: little
+  fields:
+    - [0, 4, magic, "0xA1B2C3D4 (on disk as d4 c3 b2 a1, little-endian)"]
+    - [4, 2, version_major, "2"]
+    - [6, 2, version_minor, "4"]
+    - [8, 4, thiszone, "0"]
+    - [12, 4, sigfigs, "0"]
+    - [16, 4, snaplen, "65535"]
+    - [20, 4, network, "1 = LINKTYPE_ETHERNET"]
+pcap_record_header_layout:   # 16 bytes, little-endian, precedes each packet
+  endian: little
+  fields:
+    - [0, 4, ts_sec, "capture timestamp seconds"]
+    - [4, 4, ts_usec, "capture timestamp microseconds"]
+    - [8, 4, incl_len, "bytes of packet captured (59)"]
+    - [12, 4, orig_len, "original packet length (59)"]
+ethernet_ii_layout:          # 14 bytes, network byte order
+  endian: big
+  fields:
+    - [0, 6, dst_mac, "02:00:00:00:00:02 (server)"]
+    - [6, 6, src_mac, "02:00:00:00:00:01 (client)"]
+    - [12, 2, ethertype, "0x0800 = IPv4"]
+ipv4_layout:                 # 20 bytes, no options, network byte order
+  endian: big
+  fields:
+    - [0, 1, version_ihl, "0x45 = IPv4, IHL 5 (20 bytes)"]
+    - [1, 1, dscp_ecn, "0x00"]
+    - [2, 2, total_length, "45 = 20 IP + 20 TCP + 5 payload"]
+    - [4, 2, identification, "0x0001 / 0x0002 / 0x0003 per packet"]
+    - [6, 2, flags_frag, "0x4000 = Don't Fragment"]
+    - [8, 1, ttl, "64"]
+    - [9, 1, protocol, "6 = TCP"]
+    - [10, 2, header_checksum, "real one's-complement checksum over the 20-byte IP header"]
+    - [12, 4, src_ip, "10.0.0.1"]
+    - [16, 4, dst_ip, "10.0.0.2"]
+tcp_layout:                  # 20 bytes, no options, network byte order
+  endian: big
+  fields:
+    - [0, 2, src_port, "49152"]
+    - [2, 2, dst_port, "80"]
+    - [4, 4, seq, "1000 / 1000 / 1010 per packet (RFC 793 sequence number)"]
+    - [8, 4, ack, "1"]
+    - [12, 1, data_offset_reserved, "0x50 = data offset 5 words (20 bytes)"]
+    - [13, 1, flags, "0x18 = PSH + ACK"]
+    - [14, 2, window, "8192"]
+    - [16, 2, checksum, "real checksum over the RFC 793 pseudo-header + TCP header + payload"]
+    - [18, 2, urgent_pointer, "0x0000"]
+checks:
+  pcap_magic: "0xA1B2C3D4, little-endian file"
+  link_type: "1 = LINKTYPE_ETHERNET"
+  checksum_validated: true   # IP and TCP checksums are the real computed values, asserted below
+  initial_seq: 1000
+  reassembly_rule: "stream offset = seq - initial_seq; duplicate (same seq+data) adds nothing"
+  packet_boundaries_distinct_from_message_boundaries: true
+expected:
+  pcap_hex: d4c3b2a1020004000000000000000000ffff00000100000040420f00000000003b0000003b00000002000000000202000000000108004500002d00014000400626c80a0000010a000002c0000050000003e80000000150182000d3f9000048454c4c4f40420f0020a107003b0000003b00000002000000000202000000000108004500002d00024000400626c70a0000010a000002c0000050000003e80000000150182000d3f9000048454c4c4f41420f00000000003b0000003b00000002000000000202000000000108004500002d00034000400626c60a0000010a000002c0000050000003f20000000150182000c9e50000574f524c44
+  global_header_hex: d4c3b2a1020004000000000000000000ffff000001000000
+  global_header_decoded:
+    magic: "0xa1b2c3d4"
+    version: "2.4"
+    snaplen: 65535
+    network: 1
+  packets:
+    - label: "A"
+      record_header_hex: "40420f00000000003b0000003b000000"
+      frame_hex: "02000000000202000000000108004500002d00014000400626c80a0000010a000002c0000050000003e80000000150182000d3f9000048454c4c4f"
+      ts: "1000000.000000"
+      seq: 1000
+      flags: "0x18 (PSH, ACK)"
+      payload_len: 5
+      payload: "HELLO"
+      ip_header_checksum: "0x26c8"
+      tcp_checksum: "0xd3f9"
+      stream_offset: 0
+      covers_stream_bytes: "0..4 (seq 1000..1004)"
+    - label: "B (retransmission of A)"
+      record_header_hex: "40420f0020a107003b0000003b000000"
+      frame_hex: "02000000000202000000000108004500002d00024000400626c70a0000010a000002c0000050000003e80000000150182000d3f9000048454c4c4f"
+      ts: "1000000.500000"
+      seq: 1000
+      flags: "0x18 (PSH, ACK)"
+      payload_len: 5
+      payload: "HELLO"
+      ip_header_checksum: "0x26c7"   # differs from A only because identification is 0x0002
+      tcp_checksum: "0xd3f9"         # identical to A: same seq, ack, flags, window, payload
+      stream_offset: 0
+      note: "same seq (1000) and same data as A; a reassembler must not double-count it"
+    - label: "C"
+      record_header_hex: "41420f00000000003b0000003b000000"
+      frame_hex: "02000000000202000000000108004500002d00034000400626c60a0000010a000002c0000050000003f20000000150182000c9e50000574f524c44"
+      ts: "1000001.000000"
+      seq: 1010
+      flags: "0x18 (PSH, ACK)"
+      payload_len: 5
+      payload: "WORLD"
+      ip_header_checksum: "0x26c6"
+      tcp_checksum: "0xc9e5"
+      stream_offset: 10
+      covers_stream_bytes: "10..14 (seq 1010..1014)"
+      note: "seq jumps from 1005 (end of A) to 1010, leaving stream bytes 5..9 (seq 1005..1009) missing"
+  reassembly:
+    initial_seq: 1000
+    recoverable_segments:
+      - { stream_offset: 0, bytes: "HELLO", from_seq: 1000 }
+      - { stream_offset: 10, bytes: "WORLD", from_seq: 1010 }
+    missing_range: "stream bytes 5..9 inclusive (seq 1005..1009), 5 bytes, never captured"
+    retransmission:
+      duplicate_of: "A"
+      segment: "B"
+      basis: "identical seq (1000) and identical payload (HELLO); contributes no new stream bytes"
+    reassembled_stream: "HELLO<5-byte gap>WORLD"
+    stream_complete: false
+  checksum_results:
+    ip_header_checksums_valid: true   # 0x26c8 / 0x26c7 / 0x26c6, independently recomputed
+    tcp_checksums_valid: true         # 0xd3f9 / 0xd3f9 / 0xc9e5, over the pseudo-header
+  self_verification:
+    reassembly_equals_HELLO_gap_WORLD: true
+    duplicate_detected: true
+    missing_range_equals_5_to_9: true
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    This fixture is a saved capture with no live endpoint; the outcome is
+    unobserved until a reassembler is run against it. A reassembler that emits
+    "HELLO" and "WORLD" has recovered the two delivered segments; it has not
+    recovered a complete application message, because stream bytes 5..9 were
+    never captured and cannot be invented. Recognizing a later message (WORLD)
+    does not establish that the stream is contiguous. Detecting that segment B
+    repeats segment A establishes a retransmission at the transport layer; it
+    does not establish why the sender retransmitted. Valid IP and TCP checksums
+    establish that these frames are internally well-formed as written; they do
+    not establish that the capture is complete, that no segments were dropped
+    before or after these three, or that the application protocol carried by the
+    stream is understood. Packet boundaries are not application-message
+    boundaries.

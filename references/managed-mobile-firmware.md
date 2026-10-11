@@ -39,7 +39,7 @@ JEB is a licensed analysis engine with its own client, project and item identiti
 
 ## Acceptance examples
 
-Fixtures: the [DEX header fixture](../assets/fixtures/dex-header.yaml) checks the Adler-32 and SHA-1 ranges separately (and that neither establishes APK signing), and the [JVM class fixture](../assets/fixtures/java-classfile.yaml) checks magic, version mapping, and a constant-pool decode; see [format fixtures](format-fixtures.md).
+Fixtures: the [DEX header fixture](../assets/fixtures/dex-header.yaml) checks the Adler-32 and SHA-1 ranges separately (and that neither establishes APK signing), the [JVM class fixture](../assets/fixtures/java-classfile.yaml) checks magic, version mapping, and a constant-pool decode, and the [.NET metadata fixture](../assets/fixtures/dotnet-metadata.yaml) makes the first acceptance example checkable — the `BSJB` root, stream directory, and `#~` table bitvector decode while every MethodDef RVA is 0 (no CIL body), and AOT/ReadyToRun images route to native analysis; see [format fixtures](format-fixtures.md).
 
 - A known .NET fixture yields correct method signature, CIL call and native declaration without loading the assembly.
 - An APK's decoded manifest package/version resolves to original resource IDs and the APK digest.

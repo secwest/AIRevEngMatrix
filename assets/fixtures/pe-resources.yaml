@@ -1,0 +1,150 @@
+schema_version: 1
+kind: native_format_fixtures
+format: pe32plus_resources_and_overlay
+description: >
+  Synthetic minimal PE32+ image for checking a PE parser's RVA->file-offset
+  mapping, its resource-directory walk to a single leaf, and its overlay
+  detection. All multi-byte fields are little-endian (Microsoft PE/COFF
+  Specification, rev 11: "MS-DOS Stub", "Signature", "COFF File Header",
+  "Optional Header (Image Only)", "Section Table", and ".rsrc Section"). The
+  DOS stub carries 'MZ' and e_lfanew at offset 0x3C pointing at the "PE\0\0"
+  signature; the COFF header sets Machine 0x8664 (IMAGE_FILE_MACHINE_AMD64)
+  and NumberOfSections 2; the optional header magic is 0x020B (PE32+). The
+  image has two sections (.text, .rsrc) followed by trailing OVERLAY bytes
+  that lie past the last section's raw data and are not mapped by any section.
+  The whole 1552-byte file is given as full_hex; the .rsrc section, the
+  resource leaf, and the overlay are also given as sub-slices so each check
+  stands on its own bytes.
+header_layout:
+  endian: little
+  image_base: "0x140000000"
+  file_alignment: 512      # 0x200
+  section_alignment: 4096  # 0x1000
+  dos_header:              # offset, size, name, meaning
+    - [0, 2, e_magic, "'MZ' (0x5A4D)"]
+    - [60, 4, e_lfanew, "0x40 = file offset of the PE signature"]
+  pe_signature:
+    - [64, 4, signature, "'PE\\0\\0' at e_lfanew"]
+  coff_file_header:       # 20 bytes, begins right after the PE signature (0x44)
+    - [0, 2, machine, "0x8664 = IMAGE_FILE_MACHINE_AMD64 (x86-64)"]
+    - [2, 2, number_of_sections, "2"]
+    - [16, 2, size_of_optional_header, "0xF0 (PE32+, 16 data directories)"]
+    - [18, 2, characteristics, "0x0022 EXECUTABLE_IMAGE | LARGE_ADDRESS_AWARE"]
+  optional_header_pe32plus:  # offsets within the optional header (begins at file 0x58)
+    - [0, 2, magic, "0x020B = PE32+"]
+    - [16, 4, address_of_entry_point, "0x1000 (RVA)"]
+    - [24, 8, image_base, "0x140000000 (u64, PE32+ has no BaseOfData)"]
+    - [56, 4, size_of_image, "0x3000 (virtual size of the loaded image, aligned)"]
+    - [60, 4, size_of_headers, "0x200 (headers rounded up to FileAlignment)"]
+    - [64, 4, checksum, "image CheckSum; file offset 0x98"]
+    - [112, 128, data_directory, "16 entries; index 2 = Resource Table (RVA 0x2000, size 0x200)"]
+  section_header:         # 40 bytes each, begins at file 0x148
+    - [0, 8, name, "8-byte ASCII, NUL-padded (.text, .rsrc)"]
+    - [8, 4, virtual_size, null]
+    - [12, 4, virtual_address, "RVA of the section when loaded"]
+    - [16, 4, size_of_raw_data, null]
+    - [20, 4, pointer_to_raw_data, "file offset of the section's bytes"]
+    - [36, 4, characteristics, null]
+  resource_tree:          # .rsrc is a tree of IMAGE_RESOURCE_DIRECTORY nodes; offsets are section-relative
+    - "IMAGE_RESOURCE_DIRECTORY (16 bytes): Characteristics, TimeDateStamp, Major/Minor, NumberOfNamedEntries, NumberOfIdEntries"
+    - "IMAGE_RESOURCE_DIRECTORY_ENTRY (8 bytes): Name/Id, OffsetToData; high bit of OffsetToData set => child directory, clear => IMAGE_RESOURCE_DATA_ENTRY"
+    - "IMAGE_RESOURCE_DATA_ENTRY (16 bytes): OffsetToData (an RVA, not section-relative), Size, CodePage, Reserved"
+    - "this fixture: root(type RT_RCDATA=10) -> name/id(1) -> language(0x409) -> data entry -> leaf"
+checks:
+  # A parser must read e_lfanew, confirm the PE signature, decode the COFF and
+  # PE32+ optional headers, build the section table, and resolve RVAs through it
+  # with file_offset = PointerToRawData + (rva - VirtualAddress). It must then
+  # walk the resource tree to the single data entry, read the leaf's RVA/size,
+  # map the RVA to a file offset, and hash the leaf bytes. The overlay is every
+  # byte from the end of the last section's raw data to EOF.
+  rva_to_offset_formula: "file_offset = PointerToRawData + (rva - VirtualAddress), using the section whose [VA, VA+size) contains the rva"
+  resource_leaf_count: 1
+  overlay_is_unmapped_tail: true   # bytes past the last raw section, covered by no section
+  checksum_algorithm: >
+    documented PE folding checksum: 16-bit end-around-carry sum over the whole
+    file as 32-bit words with the CheckSum field treated as zero, folded to
+    16 bits, plus the file length. Computed here and recomputed after the field
+    was written (the field is skipped, so the value is self-consistent); it was
+    NOT cross-checked against a Microsoft tool in this environment.
+expected:
+  full_hex: 4d5a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000050450000648602000000005f0000000000000000f00022000b020e00000200000002000000000000001000000010000000000040010000000010000000020000060000000000000006000000000000000030000000020000be2f0000030060810000100000000000001000000000000000001000000000000010000000000000000000001000000000000000000000000000000000000000002000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002e7465787400000000020000001000000002000000020000000000000000000000000000200000602e72737263000000000200000020000000020000000400000000000000000000000000004000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004831c0c390909090000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000a00000018000080000000000000000000000000000001000100000030000080000000000000000000000000000001000904000048000000582000002600000000000000000000005243444154412d5245534f555243452d4c4541462d303132333435363738394142434445460000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004f5645524c415900f0f1f2f3f4f5f6f7
+  decoded:
+    e_lfanew: "0x40"
+    pe_signature_ok: true
+    machine: "0x8664"
+    machine_name: IMAGE_FILE_MACHINE_AMD64
+    number_of_sections: 2
+    optional_header_magic: "0x020B"
+    optional_header_magic_name: PE32PLUS
+    size_of_headers: "0x200"
+    size_of_image: "0x3000"
+    checksum: "0x00002fbe"
+    sections:
+      - name: .text
+        virtual_address: "0x1000"
+        virtual_size: "0x200"
+        pointer_to_raw_data: "0x200"
+        size_of_raw_data: "0x200"
+      - name: .rsrc
+        virtual_address: "0x2000"
+        virtual_size: "0x200"
+        pointer_to_raw_data: "0x400"
+        size_of_raw_data: "0x200"
+    resource_leaf:
+      type_id: 10          # RT_RCDATA
+      name_id: 1
+      language_id: "0x409" # en-US
+      rva: "0x2058"
+      file_offset: "0x458"
+      size: 38
+      hex: 5243444154412d5245534f555243452d4c4541462d3031323334353637383941424344454600
+      sha256: c2766791e8fce75c317bbd7ebd821969801b361a63d5e32dc50e727d4ccf9f04
+    overlay:
+      start: "0x600"        # end of .rsrc raw data (0x400 + 0x200)
+      end: "0x610"          # EOF
+      size: 16
+      hex: 4f5645524c415900f0f1f2f3f4f5f6f7
+  check_results:
+    # (a) one RVA->file-offset mapping via the section table
+    rva_0x1000_to_file: "0x200"                 # .text: 0x200 + (0x1000 - 0x1000)
+    rva_0x2058_to_file: "0x458"                 # .rsrc: 0x400 + (0x2058 - 0x2000)
+    rva_to_offset_formula_holds: true
+    # (b) the resource leaf
+    resource_leaf_rva: "0x2058"
+    resource_leaf_file_offset: "0x458"
+    resource_leaf_size: 38
+    resource_leaf_sha256_ok: true
+    # the point: an RVA is not a file offset
+    leaf_rva_differs_from_file_offset: true     # 0x2058 != 0x458
+    # (c) the overlay byte range
+    overlay_range: "[0x600, 0x610)"
+    overlay_size: 16
+    overlay_is_past_last_raw_section: true
+    # optional integrity field
+    checksum_recomputes_to_stored: true         # self-consistent, not tool-verified
+cases:
+  - id: valid
+    note: >
+      The leaf RVA 0x2058 and its file offset 0x458 differ: the resource is at
+      virtual address 0x2058 once loaded (section .rsrc at VA 0x2000, leaf at
+      section offset 0x58) but lives at file offset 0x458 on disk (raw pointer
+      0x400 + 0x58). Resolving the leaf requires the section table, not the RVA
+      alone. The leaf's content digest is over the 38 leaf bytes only, not the
+      data entry or the directory nodes.
+result:
+  outcome: unobserved   # set to recorded after a parser runs this fixture
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Minimal single-leaf image: the .text bytes are a stub, VS_FIXEDFILEINFO and
+    imports/relocations/debug directories are absent, and only resource data
+    directory index 2 is populated. A decoded header and a resolved resource
+    leaf establish the on-disk layout and the leaf's bytes and digest; they do
+    not establish that the image loads, that the leaf is a valid resource of its
+    declared type, or that the overlay has any meaning. The overlay byte range
+    establishes which bytes no section maps, not what produced them (appended
+    signature, installer payload, or junk). The CheckSum here was computed with
+    the documented folding algorithm and recomputes against these bytes, but was
+    not cross-checked against a Microsoft tool, so a CheckSum match does not by
+    itself establish the image is Authenticode-signed or unmodified; signing is a
+    separate layer not present in this fixture.

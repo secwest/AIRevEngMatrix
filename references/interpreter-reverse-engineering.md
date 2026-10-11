@@ -21,7 +21,7 @@ The [Lua fixture](../assets/fixtures/environment-patterns.lua) exercises a closu
 
 [OTP `beam_lib`](https://www.erlang.org/doc/apps/stdlib/beam_lib.html) exposes chunks and available abstract/debug forms; compatible `beam_disasm` and abstract-form formatting provide additional views. Record OTP version, module/function/arity, imports/exports, atoms, literals, code identity and debug backend.
 
-Use retained abstract forms when available and label their origin. Debug backends are executable modules: only invoke a compatible trusted backend in the analysis runtime. Missing/encrypted debug information stays unavailable. BEAM disassembly is the fallback; reconstructed Erlang syntax does not imply original Elixir macros or source.
+Use retained abstract forms when available and label their origin. Debug backends are executable modules: only invoke a compatible trusted backend in the analysis runtime. Missing/encrypted debug information stays unavailable. BEAM disassembly is the fallback; reconstructed Erlang syntax does not imply original Elixir macros or source. The [BEAM container fixture](../assets/fixtures/beam-chunks.yaml) checks the `FOR1`/`BEAM` IFF structure, big-endian chunk sizes, 4-byte chunk padding, and the `AtU8` atoms, and encodes the hedge that chunk presence does not establish retained abstract forms (see [format fixtures](format-fixtures.md)).
 
 Trace guards, pattern clauses, selective receive, message ordering, exceptions, tail calls, NIFs and ports. Separate available code versions during hot loading. A NIF body requires native analysis, and a message send does not establish which receive consumed it.
 

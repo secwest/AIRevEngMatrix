@@ -1,0 +1,91 @@
+schema_version: 1
+kind: bytecode_format_fixtures
+format: hermes_hbc_file_header
+description: >
+  Synthetic React Native Hermes bytecode (HBC) file-header prefix for checking an
+  HBC reader's magic and version binding. The layout is Hermes'
+  BytecodeFileHeader (include/hermes/BCGen/HBC/BytecodeFileFormat.h): a u64 magic,
+  a u32 bytecode version, a 20-byte SHA-1 source hash, then a run of u32 counts
+  (fileLength, globalCodeIndex, functionCount, stringKindCount, identifierCount,
+  stringCount, overflowStringCount, stringStorageSize, ...). The magic constant is
+  0x1F1903C103BC1FC6, stored little-endian on disk, so the first eight bytes are
+  c6 1f bc 03 c1 03 19 1f. This fixture is a header prefix: it stops after
+  stringStorageSize. The remaining header fields (bigInt / regExp / arrayBuffer /
+  objKeyBuffer / objValueBuffer counts, segment and CommonJS fields, debugInfoOffset,
+  the options byte, and the 19-byte trailing padding) and every table that follows
+  are version-specific and are NOT included. HBC versions are release-locked: the
+  field order and table layout change between versions, so a reader must bind the
+  exact version before interpreting anything past the magic.
+layout:
+  endian: little # magic, version, and all counts are little-endian on disk
+  size_bytes: 64 # header prefix only (8 + 4 + 20 + 8*4)
+  fields: # offset, size, name, meaning
+    - [0, 8, magic, "u64 LE = 0x1F1903C103BC1FC6; on disk c6 1f bc 03 c1 03 19 1f"]
+    - [8, 4, version, "u32 LE bytecode version; this fixture is version 96"]
+    - [12, 20, source_hash, "SHA-1 of the source; 20 raw bytes"]
+    - [32, 4, file_length, "u32 LE total file length in bytes (declared)"]
+    - [36, 4, global_code_index, "u32 LE function index of the global code"]
+    - [40, 4, function_count, "u32 LE number of functions"]
+    - [44, 4, string_kind_count, "u32 LE number of string-kind entries"]
+    - [48, 4, identifier_count, "u32 LE number of identifier strings"]
+    - [52, 4, string_count, "u32 LE number of strings"]
+    - [56, 4, overflow_string_count, "u32 LE number of overflow string entries"]
+    - [60, 4, string_storage_size, "u32 LE size of the string storage blob"]
+    - [64, 0, rest_of_header_and_tables, "version-specific; not included in this fixture"]
+checks:
+  # A reader must match the 8-byte magic, then read the u32 version and bind it:
+  # a reader for version N must refuse a file whose version != N, because the
+  # header and table layout past the magic differ between HBC versions.
+  magic_u64_constant: "0x1F1903C103BC1FC6"
+  magic_on_disk_le_hex: "c61fbc03c103191f"
+  expected_version: 96
+  source_hash_algorithm: "SHA-1 (20 bytes)"
+cases:
+  - id: valid
+    # 64-byte HBC header prefix, version 96. source_hash is the real SHA-1 of the
+    # stated source string "print('hello from hermes fixture');\n".
+    hex: c61fbc03c103191f60000000010975534da1d27f735ff6243de94649d41292110004000000000000030000000200000005000000070000000000000040000000
+    note: "header prefix only; the rest of the header and all tables follow in a real file"
+    expect:
+      magic_ok: true
+      magic_le_hex: "c61fbc03c103191f"
+      magic_u64: "0x1F1903C103BC1FC6"
+      version: 96
+      version_matches_reader: true # reader is version 96
+      source_hash: "010975534da1d27f735ff6243de94649d4129211"
+      file_length: 1024
+      global_code_index: 0
+      function_count: 3
+      string_kind_count: 2
+      identifier_count: 5
+      string_count: 7
+      overflow_string_count: 0
+      string_storage_size: 64
+  - id: version_mismatch
+    # Identical prefix except the version u32 (offset 8) is 89 (0x59) instead of
+    # 96. A version-96 reader must refuse this file, not reinterpret it: the field
+    # order and table layout past the magic differ between HBC versions, so a 96
+    # reader applied to an 89 file would decode wrong offsets.
+    hex: c61fbc03c103191f59000000010975534da1d27f735ff6243de94649d41292110004000000000000030000000200000005000000070000000000000040000000
+    expect:
+      magic_ok: true # magic alone does not disambiguate version
+      version: 89 # 0x59
+      version_matches_reader: false # reader is version 96; must refuse
+result:
+  outcome: unobserved # set to recorded after a reader runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic fixture covering the HBC file-header prefix only: the magic, the
+    version, the SHA-1 source hash, and the leading u32 counts through
+    stringStorageSize. The remaining header fields and every table (function
+    headers, string table, string storage, identifier hashes, array/object
+    buffers, bytecode) are version-specific and are not included; the exact field
+    order past stringStorageSize differs between HBC versions and must be read
+    from the BytecodeFileHeader for the bound version. A passing magic plus
+    version establishes format identity and the version to decode under; it does
+    not establish that the function or string tables are present, intact, or
+    decodable, and does not establish that the source behind the SHA-1 hash can be
+    recovered. The magic is version-agnostic, so it alone cannot select a layout;
+    the version must be bound first, and a reader for one version must refuse a
+    file declaring another rather than reinterpret its bytes.

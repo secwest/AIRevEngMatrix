@@ -23,7 +23,7 @@ The [Dart fixture](../assets/fixtures/environment-patterns.dart) exercises an in
 
 ## Unity
 
-Identify Mono versus IL2CPP from actual files. Match the native binary, metadata, architecture, Unity version, registration tables and asset schema. Avoid mixing metadata from a nearby build. Generic sharing and method pointers can make several managed methods refer to the same native body.
+Identify Mono versus IL2CPP from actual files. Match the native binary, metadata, architecture, Unity version, registration tables and asset schema. Avoid mixing metadata from a nearby build. Generic sharing and method pointers can make several managed methods refer to the same native body. The [IL2CPP metadata fixture](../assets/fixtures/il2cpp-metadata.yaml) checks the `0xFAB11BAF` `global-metadata.dat` magic and the version field that gates the header layout — read before any section offset is dereferenced and before Cpp2IL/Il2CppDumper selection — while asserting the paired `libil2cpp`/`GameAssembly` match is a separate check (see [format fixtures](format-fixtures.md)).
 
 Check representative recovered addresses and method signatures in native instructions. Classify each output as declaration, stub, reconstructed IL or native pseudocode. Join script/type IDs to serialized assets using package evidence; an asset name does not resolve the invoked method.
 

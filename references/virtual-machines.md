@@ -38,7 +38,7 @@ Check recovered method addresses in native instructions. Generated dummy assembl
 
 ## Hermes, other JavaScript VMs, and snapshots
 
-For React Native, identify whether the bundle is text or Hermes HBC. [hermes-dec](https://github.com/P1sec/hermes-dec) provides parsing, disassembly and partial pseudocode for supported versions. Preserve function indices, strings, exception records and byte offsets. Upstream documents limitations in its high-level control-flow output; apparent JavaScript text need not be runnable.
+For React Native, identify whether the bundle is text or Hermes HBC. [hermes-dec](https://github.com/P1sec/hermes-dec) provides parsing, disassembly and partial pseudocode for supported versions. Preserve function indices, strings, exception records and byte offsets. Upstream documents limitations in its high-level control-flow output; apparent JavaScript text need not be runnable. The [Hermes HBC header fixture](../assets/fixtures/hermes-hbc-header.yaml) checks the 64-bit magic and the release-locked version, with a mismatch case asserting a decoder must refuse an unexpected version rather than reinterpret version-specific table layouts (see [format fixtures](format-fixtures.md)).
 
 For QuickJS, V8 code caches or another embedded engine, bind the VM revision and serialization format. A cache can depend on flags, build configuration or surrounding source. Source maps or cached strings may help, but a cache is not automatically a portable source archive. Trace native bridge calls and captured code mappings only within the observed runtime scope.
 

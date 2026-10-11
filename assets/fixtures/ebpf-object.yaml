@@ -1,0 +1,103 @@
+schema_version: 1
+kind: native_format_fixtures
+format: ebpf_elf64_relocatable_object
+description: >
+  Synthetic minimal eBPF ELF64 little-endian relocatable object
+  (ELF gABI / System V ABI, elf.h, plus the Linux BPF ELF conventions used by
+  libbpf). The ELF header declares ELFCLASS64, ELFDATA2LSB, e_type ET_REL (1),
+  and e_machine EM_BPF (247 = 0xF7). The object carries a section header string
+  table and three real sections beyond the mandatory null section: a program
+  section named "xdp" (libbpf's section-name convention for an XDP program)
+  holding two 8-byte BPF instructions, a legacy "maps" section holding one
+  struct bpf_map_def, and the ".shstrtab". The map uses the LEGACY struct
+  bpf_map_def layout (5 x u32: type, key_size, value_size, max_entries,
+  map_flags), NOT a BTF-based ".maps" section; accordingly there is NO ".BTF"
+  section in this object. The point is that an eBPF ELF object is a static,
+  checkable artifact distinct from the in-kernel translated/JITed program.
+header_layout:
+  endian: little          # EI_DATA = ELFDATA2LSB
+  class: 64               # EI_CLASS = ELFCLASS64
+  elf64_ehdr_size_bytes: 64
+  elf64_shdr_size_bytes: 64
+  e_ident:                # first 16 bytes
+    - [0, 4, EI_MAG, "0x7F 'E' 'L' 'F'"]
+    - [4, 1, EI_CLASS, "2 = ELFCLASS64"]
+    - [5, 1, EI_DATA, "1 = ELFDATA2LSB (little-endian)"]
+    - [6, 1, EI_VERSION, "1 = EV_CURRENT"]
+    - [7, 1, EI_OSABI, "0 = ELFOSABI_SYSV"]
+    - [8, 1, EI_ABIVERSION, "0"]
+    - [9, 7, EI_PAD, "zero padding to 16 bytes"]
+  elf64_ehdr:             # offsets within the 64-byte header (after e_ident)
+    - [16, 2, e_type, "1 = ET_REL (relocatable object)"]
+    - [18, 2, e_machine, "247 = 0xF7 = EM_BPF"]
+    - [20, 4, e_version, "1"]
+    - [24, 8, e_entry, "0"]
+    - [32, 8, e_phoff, "0 (no program header table)"]
+    - [40, 8, e_shoff, "120 (section header table offset)"]
+    - [48, 4, e_flags, "0"]
+    - [52, 2, e_ehsize, "64"]
+    - [54, 2, e_phentsize, "0"]
+    - [56, 2, e_phnum, "0"]
+    - [58, 2, e_shentsize, "64"]
+    - [60, 2, e_shnum, "4"]
+    - [62, 2, e_shstrndx, "3 (.shstrtab)"]
+section_layout:           # index, name, type, flags, file offset, size
+  - [0, "", SHT_NULL, 0, 0, 0]
+  - [1, "xdp", SHT_PROGBITS, "SHF_ALLOC|SHF_EXECINSTR (0x6)", 64, 16]
+  - [2, "maps", SHT_PROGBITS, "SHF_ALLOC|SHF_WRITE (0x3)", 80, 20]
+  - [3, ".shstrtab", SHT_STRTAB, 0, 100, 20]
+program_instructions:     # section "xdp", two 8-byte BPF insns
+  - [0, "b7 00 00 00 00 00 00 00", "opcode 0xB7 = BPF_ALU64|BPF_MOV|BPF_K: mov r0, 0"]
+  - [8, "95 00 00 00 00 00 00 00", "opcode 0x95 = BPF_JMP|BPF_EXIT: exit"]
+map_definition:           # legacy struct bpf_map_def at section "maps", 5 x u32 LE
+  layout: "legacy struct bpf_map_def (NOT a BTF .maps section)"
+  type: "1 = BPF_MAP_TYPE_HASH"
+  key_size: 4
+  value_size: 8
+  max_entries: 16
+  map_flags: 0
+checks:
+  # A parser must read e_ident (class 64, data LE), confirm e_machine == 247
+  # (EM_BPF), walk the e_shnum section headers of e_shentsize bytes at e_shoff,
+  # resolve names through .shstrtab, read the "xdp" program bytes as 8-byte BPF
+  # insns, and record the presence of a map section and of a .BTF section.
+  elf_magic_offset: 0
+  machine_is_bpf: "e_machine == 247 (EM_BPF)"
+  prog_section_name: "xdp"
+  insn_width_bytes: 8
+  map_section_present: true
+  btf_section_present: false
+cases:
+  - id: valid
+    hex: 7f454c460201010000000000000000000100f7000100000000000000000000000000000000000000780000000000000000000000400000000000400004000300b7000000000000009500000000000000010000000400000008000000100000000000000000786470006d617073002e7368737472746162000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000010000000600000000000000000000000000000040000000000000001000000000000000000000000000000008000000000000000000000000000000050000000100000003000000000000000000000000000000500000000000000014000000000000000000000000000000040000000000000000000000000000000a000000030000000000000000000000000000000000000064000000000000001400000000000000000000000000000001000000000000000000000000000000
+    expect:
+      magic_ok: true          # 7f 45 4c 46
+      ei_class: 64            # ELFCLASS64
+      ei_data: little_endian  # ELFDATA2LSB
+      e_type: 1               # ET_REL
+      e_machine: 247          # EM_BPF (0xF7)
+      sections: ["", "xdp", "maps", ".shstrtab"]
+      prog_section: "xdp"
+      prog_bytes: "b7000000000000009500000000000000"
+      insn0: {opcode: "0xb7", mnemonic: "mov r0, 0"}
+      insn1: {opcode: "0x95", mnemonic: "exit"}
+      map_section_present: true
+      map_layout: "legacy struct bpf_map_def"
+      btf_section_present: false
+result:
+  outcome: unobserved
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Static, header-only object: no relocations, no symbol table, no BTF, no
+    license section, and a legacy map definition rather than a BTF-described
+    one. A correct parse establishes that this is an ELF64 ET_REL object for
+    EM_BPF with a decodable "xdp" program section and a legacy map definition;
+    it does NOT establish that the program loads. The in-kernel program is a
+    distinct artifact: libbpf relocates and rewrites these bytes, the verifier
+    may reject them, and the JIT translates what survives, so the on-disk
+    instructions are not the executed instructions. Section presence does not
+    establish that the program attaches to an XDP hook, that the map is created,
+    or that the object passes the verifier; the "xdp" name is a libbpf
+    convention, not a guarantee of program type. The absence of a .BTF section
+    here is a property of this fixture, not of eBPF objects in general.

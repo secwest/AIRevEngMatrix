@@ -1,0 +1,87 @@
+schema_version: 1
+kind: bytecode_format_fixtures
+format: il2cpp_global_metadata_header
+description: >
+  Synthetic Unity IL2CPP global-metadata.dat header
+  (Il2CppGlobalMetadataHeader as parsed by Il2CppDumper / Cpp2IL). All fields
+  are u32 little-endian on disk. The header opens with a sanity magic
+  (0xFAB11BAF, bytes AF 1B B1 FA on disk) and a metadata version, followed by a
+  series of (offset u32, size u32) pairs that locate each metadata section
+  (stringLiteral, stringLiteralData, string, ...). The version is decisive: it
+  gates the header layout, because Il2CppDumper selects a different
+  Il2CppGlobalMetadataHeader struct per metadata version, so the offset/size
+  pairs are only interpretable once the version is known. This fixture uses
+  version 29 (shipped with recent Unity 2022/2023 builds) and carries the first
+  three section pairs plus a resolvable string in the string section. Real
+  metadata files carry dozens of section pairs and megabytes of data; this
+  fixture keeps three to stay compact while remaining a valid, decodable header.
+header_layout:   # offsets within the 32-byte header prefix, all u32 little-endian
+  endian: little
+  fields:
+    - [0, 4, sanity, "0xFAB11BAF sanity magic (bytes AF 1B B1 FA on disk)"]
+    - [4, 4, version, "29 (metadata version; gates the header struct layout)"]
+    - [8, 4, stringLiteralOffset, "32"]
+    - [12, 4, stringLiteralSize, "4"]
+    - [16, 4, stringLiteralDataOffset, "36"]
+    - [20, 4, stringLiteralDataSize, "4"]
+    - [24, 4, stringOffset, "40 (start of the null-terminated UTF-8 string pool)"]
+    - [28, 4, stringSize, "7"]
+data_layout:     # regions the header points at, placed after the 32-byte prefix
+  - [32, 4, stringLiteral, "opaque literal index data (not decoded here)"]
+  - [36, 4, stringLiteralData, "'lit\\0'"]
+  - [40, 7, string, "'System\\0' (null-terminated UTF-8); string index 0 resolves here"]
+checks:
+  # A loader must read the sanity magic AND the version BEFORE interpreting any
+  # offset/size pair, because the version selects which header struct (and thus
+  # which field order and count) applies. A string at index N is resolved by
+  # reading a null-terminated UTF-8 run starting at stringOffset + N.
+  sanity_read_first: true
+  version_gates_layout: "version is read immediately after sanity and selects the Il2CppGlobalMetadataHeader struct"
+  string_resolution: "null-terminated UTF-8 starting at stringOffset + index"
+expected:
+  valid_hex: af1bb1fa1d000000200000000400000024000000040000002800000007000000000000006c69740053797374656d00
+  sanity_magic: "0xFAB11BAF"
+  sanity_bytes_on_disk: "af 1b b1 fa"
+  version: 29
+  section_pairs:
+    stringLiteral: {offset: 32, size: 4}
+    stringLiteralData: {offset: 36, size: 4}
+    string: {offset: 40, size: 7}
+  resolved_string_index0: "System"
+cases:
+  - id: valid
+    hex: af1bb1fa1d000000200000000400000024000000040000002800000007000000000000006c69740053797374656d00
+    expect:
+      sanity_ok: true
+      sanity_magic: "0xFAB11BAF"
+      version: 29
+      string_pair: {offset: 40, size: 7}
+      resolved_string_index0: "System"
+  - id: version_mismatch
+    # Byte-for-byte identical to the valid case except the version field at
+    # offset 4 reads 24 (0x18) instead of 29 (0x1D). The sanity magic is
+    # unchanged, so a loader that keys only on the magic would proceed with the
+    # wrong struct; Il2CppDumper selects a different Il2CppGlobalMetadataHeader
+    # layout for version 24, which is why the version MUST be read before any
+    # offset/size pair is dereferenced.
+    hex: af1bb1fa18000000200000000400000024000000040000002800000007000000000000006c69740053797374656d00
+    expect:
+      sanity_ok: true
+      sanity_magic: "0xFAB11BAF"
+      version: 24
+      note: "same magic, different version => different header struct; offsets above (for v29) do not apply unchecked"
+result:
+  outcome: unobserved
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    The sanity magic plus version are the decisive identification gate before
+    Cpp2IL / Il2CppDumper selects a header layout, but a parsed header does not
+    establish that the paired native binary (libil2cpp.so / GameAssembly.dll)
+    matches this metadata: the code-registration and metadata-registration
+    pointers live in the binary and must be matched separately. A readable
+    section table does not establish that the sections it points at are
+    internally consistent, that the metadata version matches the binary's IL2CPP
+    runtime, or that the described types and methods are present. The version
+    read here identifies the on-disk struct only; it does not authenticate the
+    file or establish that any string beyond index 0 resolves.

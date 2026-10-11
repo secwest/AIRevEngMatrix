@@ -1,0 +1,144 @@
+schema_version: 1
+kind: native_format_fixtures
+format: minidump_module_list_and_codeview
+description: >
+  Synthetic minimal Windows minidump for checking a minidump parser's stream
+  walk, its decode of one loaded module, and the CodeView build-id it must use
+  to bind that module to a PDB. All fields are little-endian (Microsoft DbgHelp
+  structures: MINIDUMP_HEADER, MINIDUMP_DIRECTORY, MINIDUMP_MODULE_LIST,
+  MINIDUMP_MODULE, MINIDUMP_STRING, and the RSDS form of the CodeView record
+  = PDB 7.0 signature). The header Signature is 'MDMP' (reads 0x504D444D as a
+  little-endian u32) and the Version low word is 0xA793 (MINIDUMP_VERSION). One
+  stream is present: a ModuleListStream (StreamType 4) holding one
+  MINIDUMP_MODULE whose CvRecord points at an 'RSDS' record = 4-byte signature
+  + 16-byte PDB GUID + 4-byte Age + NUL-terminated PDB path. The whole
+  220-byte file is given as full_hex, and the CodeView record and module-name
+  string are also given as sub-slices so each check stands on its own bytes.
+header_layout:
+  endian: little
+  minidump_header:        # 32 bytes at file offset 0
+    - [0, 4, signature, "'MDMP' = 0x504D444D"]
+    - [4, 4, version, "low u16 = 0xA793 (MINIDUMP_VERSION); high u16 implementation-specific"]
+    - [8, 4, number_of_streams, "1"]
+    - [12, 4, stream_directory_rva, "0x20"]
+    - [16, 4, checksum, "0 (not used here)"]
+    - [20, 4, time_date_stamp, null]
+    - [24, 8, flags, "MINIDUMP_TYPE bitmask, 0 here"]
+  minidump_directory:     # 12 bytes per stream, array at stream_directory_rva
+    - [0, 4, stream_type, "4 = ModuleListStream"]
+    - [4, 4, location.data_size, "size of the stream"]
+    - [8, 4, location.rva, "file offset of the stream"]
+  minidump_module_list:   # at the stream's rva
+    - [0, 4, number_of_modules, "1"]
+    - [4, 108, modules, "array of MINIDUMP_MODULE"]
+  minidump_module:        # 108 bytes; offsets within the structure
+    - [0, 8, base_of_image, "load address"]
+    - [8, 4, size_of_image, null]
+    - [12, 4, checksum, null]
+    - [16, 4, time_date_stamp, null]
+    - [20, 4, module_name_rva, "RVA of a MINIDUMP_STRING"]
+    - [24, 52, version_info, "VS_FIXEDFILEINFO (zeroed here)"]
+    - [76, 8, cv_record, "MINIDUMP_LOCATION_DESCRIPTOR: DataSize, Rva (-> CodeView record)"]
+    - [84, 8, misc_record, "MINIDUMP_LOCATION_DESCRIPTOR (empty here)"]
+    - [92, 16, reserved, null]
+  minidump_string:        # at module_name_rva
+    - [0, 4, length, "length in BYTES of the UTF-16 string, not counting the NUL"]
+    - [4, null, buffer, "UTF-16LE code units"]
+  codeview_rsds:          # at cv_record.rva; PDB 7.0 CodeView record
+    - [0, 4, signature, "'RSDS'"]
+    - [4, 16, pdb_guid, "GUID: Data1 u32 LE, Data2 u16 LE, Data3 u16 LE, Data4 8 bytes in order"]
+    - [20, 4, age, "PDB age"]
+    - [24, null, pdb_file_name, "NUL-terminated ANSI path"]
+checks:
+  # A parser must confirm the 'MDMP' signature, read the stream directory, find
+  # the ModuleListStream, decode the one module (base, size, name), follow its
+  # CvRecord to the RSDS record, and form the symbol-server build id from the
+  # PDB GUID and Age. The build id is GUID (uppercase hex, no dashes) with Age
+  # appended as hex with no padding -- the identity a symbol store is keyed by.
+  signature_is_mdmp: true
+  module_count: 1
+  build_id_from: "RSDS PDB GUID + Age"
+  build_id_format: "<GUID uppercase hex, no dashes><Age as hex, no leading zeros>"
+  guid_on_disk_is_mixed_endian: "Data1/Data2/Data3 little-endian; Data4 in byte order"
+expected:
+  full_hex: 4d444d5093a700000100000020000000000000000000005f000000000000000004000000700000002c00000001000000000000800100000000f00100000000000000005fc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000240000009c00000000000000000000000000000000000000000000000000000052534453443322116655887799aabbccddeeff00010000006578616d706c652e70646200160000006500780061006d0070006c0065002e0064006c006c000000
+  decoded:
+    signature: "MDMP"
+    signature_u32: "0x504D444D"
+    version_low_word: "0xA793"
+    number_of_streams: 1
+    stream_directory_rva: "0x20"
+    stream:
+      type: 4
+      type_name: ModuleListStream
+      rva: "0x2C"
+    module:
+      base_of_image: "0x180000000"
+      size_of_image: "0x1F000"
+      module_name_rva: "0xC0"
+      module_name: "example.dll"
+      cv_record_rva: "0x9C"
+      cv_record_size: 36
+    codeview:
+      signature: RSDS
+      hex: 52534453443322116655887799aabbccddeeff00010000006578616d706c652e70646200
+      guid_on_disk_hex: 443322116655887799aabbccddeeff00
+      guid_text: "11223344-5566-7788-99AA-BBCCDDEEFF00"
+      age: 1
+      pdb_file_name: "example.pdb"
+      build_id: "112233445566778899AABBCCDDEEFF001"   # GUID (no dashes) + age
+    module_name_string:
+      length_bytes: 22        # 11 UTF-16 code units
+      hex: 160000006500780061006d0070006c0065002e0064006c006c000000
+  check_results:
+    signature_is_mdmp: true
+    module_count: 1
+    module_name_decode_ok: true          # "example.dll"
+    base_of_image: "0x180000000"
+    cv_signature_is_rsds: true
+    guid_decode_ok: true                 # 11223344-5566-7788-99AA-BBCCDDEEFF00
+    age: 1
+    build_id: "112233445566778899AABBCCDDEEFF001"
+cases:
+  - id: valid
+    note: >
+      The module's CodeView build id decodes cleanly:
+      11223344-5566-7788-99AA-BBCCDDEEFF00 age 1, symbol-server key
+      112233445566778899AABBCCDDEEFF001. A symbolizer that holds example.pdb
+      with this same GUID and age may bind it to this module.
+    expected_symbol_identity:
+      guid_text: "11223344-5566-7788-99AA-BBCCDDEEFF00"
+      age: 1
+      build_id: "112233445566778899AABBCCDDEEFF001"
+    symbolization: permitted             # identities match
+  - id: build_id_mismatch
+    note: >
+      A second PDB is on hand whose signature GUID differs from the module's in
+      the last byte: 11223344-5566-7788-99AA-BBCCDDEEFF99 (build id
+      112233445566778899AABBCCDDEEFF991). It does not equal the module's build
+      id 112233445566778899AABBCCDDEEFF001. A module build-id mismatch must be
+      SURFACED and symbolization REFUSED, not silently applied: the module bytes
+      in the dump were built against the GUID stored in its CvRecord, and a PDB
+      with any other GUID describes different code, so binding it would place
+      wrong names on wrong addresses.
+    expected_symbol_identity:
+      guid_text: "11223344-5566-7788-99AA-BBCCDDEEFF99"
+      age: 1
+      build_id: "112233445566778899AABBCCDDEEFF991"
+    build_ids_equal: false
+    symbolization: refused               # identities differ -> do not symbolize
+result:
+  outcome: unobserved   # set to recorded after a parser runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Minimal single-module dump: no system info, thread, memory, or exception
+    streams are present, VS_FIXEDFILEINFO is zeroed, and the PDB itself is not
+    included. A decoded module and a decoded RSDS record establish the module's
+    load address, name, and build id (GUID + age); they do not establish that a
+    matching PDB exists, is trustworthy, or is complete, nor that the module
+    bytes were present in memory. A matching build id makes a PDB a candidate
+    for symbolization; it does not authenticate the PDB. A mismatching build id
+    is decisive in the negative direction: it establishes that a given PDB is
+    the wrong file for this module, which is why the mismatch case requires
+    refusal rather than a best-effort bind.

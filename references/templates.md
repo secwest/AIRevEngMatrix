@@ -9,6 +9,7 @@ The YAML records are documentation formats. No runner automatically interprets t
 | Template | Use | Method |
 | --- | --- | --- |
 | [Toolkit plan](../assets/templates/toolkit-plan.yaml) | Select minimal components, bind inputs, and define checks | [Assembly](assembly-patterns.md) |
+| [Firmware triage](../assets/templates/firmware-triage.yaml) | Identify an image, build a validated region table, and bound unpacking before emulation or device work | [Firmware](firmware.md) |
 | [Acquisition](../assets/templates/acquisition.yaml) | Read flash or memory with repeatability and completeness checks | [Firmware lab](firmware-lab.md) |
 | [Firmware experiment](../assets/templates/firmware-experiment.yaml) | Describe a Renode/Qiling or other bounded execution experiment | [Firmware lab](firmware-lab.md) |
 | [Bus decoding](../assets/templates/bus-decoding.yaml) | Preserve signal interpretation, CAN database identity, and known-state checks | [Firmware lab](firmware-lab.md) |
@@ -97,3 +98,9 @@ rustc --edition=2021 -C opt-level=2 -C strip=symbols rust-patterns.rs -o rust-pa
 Use the platform's executable suffix where needed. Select a decompiler compatible with the output format, processor and compiler generation. Keep the known source separate from the initial interpretation when assessing reconstruction. Check parsing/error branches, checked addition, result layout, and any retained indirect trait call against the actual instructions. Optimizations may change or remove source constructs. The fixture does not require a particular assembly sequence, vtable layout, symbol spelling, or Rust-aware engine to succeed.
 
 Behavior checks establish the fixture's expected outputs on the recorded compiler/target. A decompiler comparison additionally requires its version, settings, raw output, instruction mapping, and observed failures. These two checks have separate outcomes.
+
+## Firmware fixture exercise
+
+The [firmware fixtures](firmware-fixtures.md) supply two known-answer inputs for checking firmware parsers and base inference. The [uImage fixture](../assets/fixtures/firmware-uimage.yaml) has four 64-byte-header cases that separate header parsing, header-CRC validity, and payload-CRC validity, plus truncation and bad-magic rejection. The [Cortex-M fixture](../assets/fixtures/firmware-cortexm.yaml) is a 144-byte ARMv7-M fragment whose vector table supports a single consistent load base.
+
+Run every case against the parser or analyzer under test, record its engine and version, and compare decoded values and validation flags with each case's `expect` block. A `bad_data_crc` case that reports a valid payload CRC, or a `truncated_payload` case that computes a CRC over zero-filled bytes, is a failing check, not a parsed record. For the Cortex-M fixture, the decisive test is the mutual consistency of the initial SP, reset vector, handler vectors, and reserved slots, not one disassembled instruction. A fixture pass establishes the expected outcome for that engine; a result on a real image needs that image's own digest, coordinate system, and layering.

@@ -1,0 +1,82 @@
+schema_version: 1
+kind: firmware_format_fixtures
+format: legacy_uimage_header
+description: >
+  Synthetic U-Boot legacy image (uImage) headers for checking a header parser
+  and its validation branches. The 64-byte header is big-endian. The data CRC
+  covers the payload only; the header CRC covers the 64-byte header with its own
+  CRC field zeroed. These are independent checks: a valid header CRC does not
+  establish payload integrity, and neither CRC establishes authenticity.
+header_layout:
+  endian: big
+  size_bytes: 64
+  fields: # offset, size, name, meaning
+    - [0, 4, ih_magic, "0x27051956"]
+    - [4, 4, ih_hcrc, "CRC32 of the header with this field zeroed"]
+    - [8, 4, ih_time, "creation timestamp"]
+    - [12, 4, ih_size, "payload length in bytes, not counting the header"]
+    - [16, 4, ih_load, "load address"]
+    - [20, 4, ih_ep, "entry point"]
+    - [24, 4, ih_dcrc, "CRC32 of the payload"]
+    - [28, 1, ih_os, "operating system (5 = Linux)"]
+    - [29, 1, ih_arch, "architecture (2 = ARM)"]
+    - [30, 1, ih_type, "image type (2 = kernel)"]
+    - [31, 1, ih_comp, "compression (0 = none)"]
+    - [32, 32, ih_name, "NUL-padded image name"]
+checks:
+  # A parser must verify magic, read ih_size, recompute both CRC32 values, and
+  # keep "header parsed" distinct from "header CRC valid" distinct from
+  # "payload CRC valid". crc32 is the zlib/IEEE polynomial.
+  magic_offset: 0
+  header_crc_field_zeroed_before_hashing: true
+  data_crc_covers_payload_only: true
+cases:
+  - id: valid
+    hex: 27051956be61517f5f0000000000004080008000800080003906584f0502020072766d782074657374206b65726e656c0000000000000000000000000000000052564d582d55494d4147452d5041594c4f41440a000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b
+    expect:
+      magic_ok: true
+      ih_size: 64
+      payload_bytes_present: 64
+      header_crc_ok: true
+      data_crc_ok: true
+      ih_os: 5
+      ih_arch: 2
+      ih_type: 2
+      ih_comp: 0
+      ih_name: "rvmx test kernel"
+  - id: bad_data_crc
+    # One payload byte differs from `valid` (offset 69: 'U' -> 'T'). The header
+    # is byte-identical to `valid`, so the header CRC still passes while the
+    # payload CRC fails. Demonstrates header integrity is not payload integrity.
+    hex: 27051956be61517f5f0000000000004080008000800080003906584f0502020072766d782074657374206b65726e656c0000000000000000000000000000000052564d582d54494d4147452d5041594c4f41440a000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b
+    expect:
+      magic_ok: true
+      ih_size: 64
+      payload_bytes_present: 64
+      header_crc_ok: true
+      data_crc_ok: false
+  - id: truncated_payload
+    # Declares ih_size = 64 but only 40 payload bytes follow. A parser must
+    # report an end-of-input / short-payload error, not silently zero-fill the
+    # missing bytes and report a CRC result for them.
+    hex: 27051956be61517f5f0000000000004080008000800080003906584f0502020072766d782074657374206b65726e656c0000000000000000000000000000000052564d582d55494d4147452d5041594c4f41440a000102030405060708090a0b0c0d0e0f10111213
+    expect:
+      magic_ok: true
+      ih_size: 64
+      payload_bytes_present: 40
+      header_crc_ok: true
+      data_crc_ok: short_input # cannot be computed over the full declared length
+  - id: bad_magic
+    # First byte flipped; a parser must reject before trusting any later field.
+    hex: 28051956be61517f5f0000000000004080008000800080003906584f0502020072766d782074657374206b65726e656c00000000000000000000000000000000
+    expect:
+      magic_ok: false
+result:
+  outcome: unobserved # set to recorded after a parser runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic fixture with no vendor wrapper, signature, or FIT structure. It
+    checks header decoding and CRC validation only. A real uImage may be wrapped
+    in a FIT container, be signed, or carry a compressed payload; those layers
+    are analyzed separately.

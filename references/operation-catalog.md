@@ -107,6 +107,11 @@ Method: [Firmware](firmware.md).
 | Operation | Input and method | Result | Check or limit |
 | --- | --- | --- | --- |
 | `inspect_firmware_regions`, `extract_firmware` | Immutable image and bounded scanner/parser; selected ranges and extraction destination. | Validated candidate regions or recovered files, transforms, hashes, unknown chunks. | Scanner signatures need confirmation; decompressed coordinates keep their transformation map. |
+| `reconstruct_boot_chain` | Image/partition map, boot metadata, FIT/U-Boot or DTB parser, kernel/DTB or reset vector. | Ordered boot stages with load addresses, root selection, and configuration sources. | Resolve each referenced image and address; a DTB describes intended, not observed, hardware. Separate configured from observed boot. |
+| `analyze_update_policy` | Manifest, signature/verification code, slot and rollback metadata. | Signature scope, key anchor, verifier code path, board/version gates, A/B and anti-rollback behavior. | Distinguish present-in-package, checked-by-code, and observed-on-device; name OTP/eFuse/TPM/server dependencies. Metadata alone does not prove acceptance or bypass. |
+| `reconstruct_delta_update` | Payload operation list, the exact required base image, partition/extent metadata. | Reconstructed target bytes or explicit missing-base gaps, required-base identities, unsupported operations. | Verify base and target digests and extent bounds; a missing base leaves operations unresolved, and zero-fill does not recover unknown extents. |
+| `inspect_uefi_image` | Capsule/SPI image, firmware-volume parser, GUID/dependency map, PE/COFF analyzer. | Regions, firmware volumes, module identity, dispatch conditions, protocol uses, variable stores. | Match GUID, enclosing volume, section type, architecture, and digest together; presence does not prove dispatch in the selected boot mode. Keep static parsing separate from privileged hardware queries. |
+| `analyze_mcu_image` | Raw MCU/RTOS binary, inferred memory map and load base, vector/interrupt and task analysis. | Reset-to-feature path, memory-mapped I/O accesses, ISR/task contexts, SDK/RTOS identity candidates. | Test the load base against multiple references, not one instruction; model MMIO as hardware, not variables; library signatures mislead after LTO or stripping. |
 
 ## JavaScript and cross-layer application analysis
 

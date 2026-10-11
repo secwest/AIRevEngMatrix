@@ -1,0 +1,59 @@
+schema_version: 1
+kind: firmware_image_fixtures
+format: cortex_m_vector_table_image
+description: >
+  Synthetic ARMv7-M (Cortex-M) image fragment for checking load-base inference
+  from a vector table. The image is intended to load at flash address
+  0x08000000. Word 0 is the initial main stack pointer; word 1 is the reset
+  vector. On Cortex-M the reset vector and all handler addresses are Thumb, so
+  bit 0 is set and the instruction address is the value with bit 0 cleared.
+  This fixture exercises the base-inference heuristic only; it is not runnable
+  firmware and models no peripherals.
+image:
+  architecture: armv7-m
+  endianness: little
+  instruction_set: thumb
+  intended_load_address: "0x08000000"
+  ram_region: "0x20000000-0x20010000 (modeled)"
+  total_bytes: 144
+  sha256: ef3c27887f4736ab3f910b4234243b94777a54f8588b452f901da5031e09850d
+  hex: 001000208100000889000008890000088900000889000008890000080000000000000000000000000000000089000008890000080000000089000008890000088900000889000008890000088900000889000008890000088900000889000008890000088900000889000008890000088900000889000008890000088900000802480168fee700bffee700bf00000240
+vector_table:
+  # Word 0 is not a vector; it is the initial SP. Words 1.. are exception
+  # vectors. Reserved slots are zero and must not be read as code addresses.
+  offset: 0
+  entries:
+    - [0, initial_msp, "0x20001000", "points into the modeled RAM region, top-down stack"]
+    - [1, reset, "0x08000081", "Thumb; instruction at 0x08000080"]
+    - [2, nmi, "0x08000089", "Thumb; instruction at 0x08000088"]
+    - [3, hardfault, "0x08000089", "shared stub handler in this fixture"]
+    - [7, reserved, "0x00000000", "reserved slot, not an address"]
+checks:
+  # The decisive base-inference test is consistency across several references,
+  # not a single disassembled instruction.
+  initial_sp_in_ram: true          # word 0 lands in a plausible RAM region
+  reset_vector_thumb_bit_set: true # word 1 has bit 0 = 1
+  reset_entry_in_flash: true       # word 1 & ~1 lands in the intended flash base
+  handler_addresses_consistent: true # non-reserved vectors share the flash base
+  reserved_slots_zero: true        # slots 4..6 are zero, not code pointers
+expected_inference:
+  load_base: "0x08000000"
+  initial_msp: "0x20001000"
+  reset_entry: "0x08000080"
+  reasoning: >
+    Treating bytes at file offset 0 as a Cortex-M vector table, the initial SP
+    (0x20001000) resolves into RAM and the reset vector (0x08000081, Thumb)
+    resolves into flash at the intended base. Multiple handler vectors share
+    that base and reserved slots are zero, which is mutually consistent with a
+    0x08000000 load address. This remains a hypothesis about an image offset;
+    device remapping (for example a boot-ROM alias at 0x00000000) can change the
+    effective base, and a single matching instruction would not establish it.
+result:
+  outcome: unobserved
+  analyzer_engine: null
+  analyzer_version: null
+  limitations: >
+    No peripherals, clock tree, or boot ROM are modeled. The two short code
+    stubs (an initial load and two self-branch idle loops) exist only so that
+    reset and handler targets point at decodable Thumb, not to represent device
+    behavior. Use the firmware experiment template for any execution claim.

@@ -1,0 +1,62 @@
+schema_version: 1
+kind: firmware_triage
+record_state: draft
+question: null
+# Static identification, region mapping, and bounded unpacking of a firmware
+# image, before any emulation or device work. Pairs with acquisition.yaml
+# (how the bytes were obtained) and firmware-experiment.yaml (execution).
+image:
+  path: null
+  sha256: null
+  byte_length: null
+  source: null          # vendor_package, flash_dump, debug_read, ota_payload, unknown
+  completeness: unknown # complete, partial, or unknown
+  claimed_device: null  # label/serial claim, unverified until matched to bytes
+  claimed_version: null # vendor string claim, unverified
+container_probe:
+  outer_format_candidates: [] # with the header field or magic that suggests each
+  endianness: null
+  offset_coordinate_system: null # file_relative, partition_relative, flash_physical, or load_address
+  entropy_windows: []   # start, end_exclusive, mean_entropy, note (high entropy != encryption)
+  declared_checksums: []
+  manifest_present: unknown
+raw_flash_geometry: # only when the source is a raw NAND/SPI dump
+  present: false
+  page_bytes: null
+  oob_bytes: null
+  erase_block_bytes: null
+  ecc_and_bad_block_handling: null
+  physical_to_logical_transform: null # keep reproducible; do not silently strip OOB/bad blocks
+region_table:
+  # One row per discovered span. offset/length are in the coordinate system
+  # named above. A scanner hit is a candidate until a format parser validates it.
+  # Entries: parent_sha256, offset, length, candidate_type, parser_validation,
+  #          child_sha256, overlaps, notes
+  scanner_engine: null       # e.g. binwalk, unblob, bounded signature scan
+  scanner_version: null
+  rows: []
+  unknown_or_gap_spans: []   # ranges not attributed to any validated region
+extraction:
+  destination_isolated: true
+  limits:                    # never null-as-unlimited; choose for the target
+    recursion_depth: null
+    max_output_bytes: null
+    max_file_count: null
+    wall_seconds: null
+  rejected_entries: []       # absolute paths, .. traversal, escaping links, special files, bombs
+  extracted: []              # path, child_sha256, parent_span, extractor, diagnostics
+  filesystem_metadata_preserved: unknown # permissions, owners, links, xattrs/caps, device nodes
+checks:
+  magic_and_sizes_match_raw_bytes: unobserved
+  offsets_round_trip_to_source: unobserved
+  internal_checksums_validated: unobserved # record pass/fail/absent per region
+  child_digests_stable_on_reextraction: unobserved
+  coordinate_system_confirmed: unobserved
+result:
+  outcome: unobserved
+  validated_regions: []
+  explicit_unknowns: []  # unattributed spans, unsupported wrappers, encrypted regions
+  limitations: >
+    A validated region map does not establish that a region is selected at boot,
+    is authentic, or is reachable at runtime. Encrypted content is reported by
+    its visible header and verification path, not by claimed plaintext.

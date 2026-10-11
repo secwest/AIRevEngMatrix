@@ -185,7 +185,7 @@ The [template guide](references/templates.md) links copyable working records and
 | Work | Templates |
 | --- | --- |
 | Select a small toolkit and deliver a finding | [Toolkit plan](assets/templates/toolkit-plan.yaml), [finding](assets/templates/finding.md) |
-| Acquire firmware and run controlled experiments | [Acquisition](assets/templates/acquisition.yaml), [firmware experiment](assets/templates/firmware-experiment.yaml) |
+| Triage, acquire firmware, and run controlled experiments | [Firmware triage](assets/templates/firmware-triage.yaml), [acquisition](assets/templates/acquisition.yaml), [firmware experiment](assets/templates/firmware-experiment.yaml) |
 | Decode physical signals or CAN frames | [Bus decoding](assets/templates/bus-decoding.yaml) |
 | Test inputs and explain path conditions | [Fuzz campaign](assets/templates/fuzz-campaign.yaml), [path query](assets/templates/path-query.yaml), [test cases](assets/templates/test-cases.csv) |
 | Recover a format or inspect another runtime | [Format study](assets/templates/format-study.yaml), [runtime study](assets/templates/runtime-study.yaml) |
@@ -203,6 +203,8 @@ The [Rust fixture](assets/fixtures/rust-patterns.rs) and its [seven behavior cas
 
 The [environment fixtures](references/environment-fixtures.md) add C++, C#, Java, Go, Swift, Python, JavaScript, Dart, Lua and Erlang sources with ten shared behavior cases and compiler-specific profiles. They exercise dispatch, closures, errors, async lowering or cleanup. Additional APK, Flutter, game-engine, Wasm and other SDK profiles have explicit fixture specifications. Baseline compilation/execution and decompiler reconstruction are recorded separately.
 
+The [firmware fixtures](references/firmware-fixtures.md) add a synthetic uImage header with valid, bad-payload-CRC, truncated and bad-magic cases, and a Cortex-M vector-table image with a single consistent load base. They check a header parser's CRC branches and load-base inference against known answers, keeping the fixture check separate from a result on a real image.
+
 ## Use and repository guide
 
 The repository root is a skill directory. It can be installed under the name `reverse-engineer-direct` in a compatible host's skills directory, or used as a reference library. An investigation needs a concrete question and the relevant artifact, capture, or accessible target. Tool installation and device access depend on the execution environment.
@@ -218,6 +220,7 @@ The repository root is a skill directory. It can be installed under the name `re
 | [Managed code and mobile devices](references/managed-mobile-firmware.md) | .NET, Android packages, ADB, and JEB |
 | [Firmware](references/firmware.md) | Image recovery, embedded Linux, MCU/RTOS, UEFI, boot, and updates |
 | [Firmware lab](references/firmware-lab.md) | Execution models, chip/debug acquisition, signals, and CAN |
+| [Firmware fixtures](references/firmware-fixtures.md) | Known-answer uImage header and Cortex-M base-inference checks |
 | [Testing and constraints](references/testing-and-constraints.md) | Fuzz harnesses, protocol campaigns, failure replay, symbolic inputs, and taint |
 | [Formats and runtimes](references/formats-and-runtimes.md) | Kaitai parsers, Wasm, JVM, Python bytecode, and Go metadata |
 | [Matching and runtime artifacts](references/matching-and-runtime-artifacts.md) | Function matching, software inventory, capability/string discovery, memory, and rr |

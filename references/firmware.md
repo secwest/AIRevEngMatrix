@@ -2,7 +2,7 @@
 
 Firmware analysis covers vendor update packages, flash dumps, boot components, embedded Linux images, MCU/RTOS binaries, and PC firmware. Each question requires a different combination of parsers, disassembler views, capture adapters, and comparison methods. A filesystem tree, a chip-level memory map, and a running service are distinct results with different evidence requirements.
 
-The [firmware lab](firmware-lab.md) covers execution models, acquisition and buses. [Firmware specializations](firmware-specializations.md) extends these methods to register descriptions, RTOS state, trust boundaries, raw NAND, ACPI, USB, Bluetooth, RF, FPGA, PLC and physical measurements. Language-specific code follows the [decompiler guide](language-decompilation.md), including [Rust firmware](rust-reverse-engineering.md).
+The [firmware lab](firmware-lab.md) covers execution models, acquisition and buses. [Firmware specializations](firmware-specializations.md) extends these methods to register descriptions, RTOS state, trust boundaries, raw NAND, ACPI, USB, Bluetooth, RF, FPGA, PLC and physical measurements. Language-specific code follows the [decompiler guide](language-decompilation.md), including [Rust firmware](rust-reverse-engineering.md). The [firmware fixtures](firmware-fixtures.md) give a uImage header parser and Cortex-M base inference a known input with a known answer.
 
 ## Analysis paths
 
@@ -44,7 +44,7 @@ For raw flash, determine whether the dump includes NAND out-of-band (OOB) bytes,
 
 ## Map and unpack the layers
 
-Build a compact region table with `parent digest | offset | length | candidate type | validation | child digest`. Set resource limits for recursion depth, output bytes, file count, and runtime. Extract to an isolated directory; reject absolute paths, `..` traversal, links that escape the tree, special files, and archive bombs. Never mount or execute a candidate during static inspection. Store byte ranges or reproducible extraction commands when a full extracted tree is unnecessary.
+Build a compact region table with `parent digest | offset | length | candidate type | validation | child digest`. The [firmware triage record](../assets/templates/firmware-triage.yaml) supplies this table plus the container probe, raw-flash geometry, and extraction-limit fields for the static mapping and unpacking phase. Set resource limits for recursion depth, output bytes, file count, and runtime. Extract to an isolated directory; reject absolute paths, `..` traversal, links that escape the tree, special files, and archive bombs. Never mount or execute a candidate during static inspection. Store byte ranges or reproducible extraction commands when a full extracted tree is unnecessary.
 
 The region table describes input spans. Decompressed files and reconstructed partitions have their own coordinates; they may depend on several input extents or a transformation with no byte-for-byte offset mapping. Their provenance records parent digests, input spans or extent lists, transformation/version, parameters, and output digest. Unknown mappings remain unknown. Filesystem metadata includes permissions, owners, links, extended attributes/capabilities when present, and device-node descriptions. Unsafe entries are recorded as metadata without being materialized on the host.
 
@@ -96,7 +96,7 @@ Debug attach and memory reads can themselves halt or reset a target or trigger h
 
 ## Verification and output
 
-Validate the narrowest result that matters: parser offsets round-trip to raw bytes; extracted child digests are stable; a boot-stage reference points to the correct image; a service path reaches its actual entry point; a claimed update check has a corresponding verifier branch; a runtime event repeats under the same conditions. For version comparisons, pair like-for-like components using digest, build ID, partition role, and architecture; report changed packaging separately from changed code. If a component cannot be extracted or matched, preserve it as an explicit unknown.
+Validate the narrowest result that matters, using a known fixture where one exists before trusting the same logic on a real image: the [firmware fixtures](firmware-fixtures.md) check a uImage header parser's CRC branches and Cortex-M load-base inference against known answers. Parser offsets round-trip to raw bytes; extracted child digests are stable; a boot-stage reference points to the correct image; a service path reaches its actual entry point; a claimed update check has a corresponding verifier branch; a runtime event repeats under the same conditions. For version comparisons, pair like-for-like components using digest, build ID, partition role, and architecture; report changed packaging separately from changed code. If a component cannot be extracted or matched, preserve it as an explicit unknown.
 
 A firmware finding consists of the result and its supporting offsets, addresses, paths, or capture events, along with target digest, acquisition completeness, key tool versions, and material uncertainty. Optional graphs and evidence bundles follow [the shared conventions](evidence-and-runtime.md) when cross-layer joins or auditability warrant them.
 

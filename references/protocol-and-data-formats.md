@@ -16,7 +16,7 @@ Decode layers in order and retain intermediate bytes with their transformations.
 
 ## Recover fields and state
 
-Collect examples with independently known actions and vary one property at a time where practical. Record each field's location, width, byte order, encoding, scaling, length relation, checksum coverage and confidence. Unknown Protobuf field numbers or wire types do not reveal original field names or every schema constraint. A syntactically decoded CBOR/ASN.1 object can still have unresolved application meaning.
+Collect examples with independently known actions and vary one property at a time where practical. Record each field's location, width, byte order, encoding, scaling, length relation, checksum coverage and confidence. Unknown Protobuf field numbers or wire types do not reveal original field names or every schema constraint. A syntactically decoded CBOR/ASN.1 object can still have unresolved application meaning. The [structured-records fixture](../assets/fixtures/structured-records.yaml) encodes this as a check: it decodes a Protobuf message to field numbers and wire types and a CBOR value to its structure, while asserting that names and declared types are not recoverable from the wire (see [format fixtures](format-fixtures.md)).
 
 Construct a finite state/sequence model including prerequisites, request/response association, asynchronous events, errors, timeouts, reconnects and persistent state. Separate direction-dependent messages and negotiated versions. A single successful exchange does not establish all accepted inputs or error behavior.
 

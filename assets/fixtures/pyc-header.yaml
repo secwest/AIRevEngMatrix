@@ -1,0 +1,101 @@
+schema_version: 1
+kind: bytecode_format_fixtures
+format: cpython_pyc_header
+description: >
+  Synthetic CPython compiled-module (.pyc) headers for checking a header parser
+  and its version/flags gating. The header is 16 bytes: a 4-byte magic number,
+  a 4-byte little-endian bit field (flags), and then either an mtime + source
+  size (timestamp-based) or an 8-byte source hash (hash-based). The magic number
+  and the flag semantics are defined in CPython Lib/importlib/_bootstrap_external.py
+  (MAGIC_NUMBER, and the invalidation modes) and in PEP 552 (Deterministic pycs).
+  MAGIC_NUMBER is constructed as (magic_int | ord('\r')<<16 | ord('\n')<<24)
+  encoded little-endian, so the last two magic bytes are always 0x0D 0x0A and the
+  first two are the version integer little-endian. These fixtures target CPython
+  3.11, whose magic integer is 3495 (bytes a7 0d 0d 0a). A decoded header selects
+  the expected opcode format but does not establish that a given decompiler
+  supports those opcodes; the marshalled code object that follows is not included.
+header_layout:
+  endian: little # the flags u32, mtime, size, and the magic version int are LE
+  size_bytes: 16
+  fields: # offset, size, name, meaning
+    - [0, 4, magic_number, "4 bytes: version int (u16 LE) then 0x0D 0x0A; 3.11 = a7 0d 0d 0a"]
+    - [4, 4, flags, "u32 LE bit field; bit0 = hash-based (PEP 552), bit1 = check_source"]
+    - [8, 4, mtime, "timestamp variant (bit0==0): source st_mtime, u32 LE"]
+    - [12, 4, source_size, "timestamp variant (bit0==0): source size in bytes, u32 LE"]
+    - [8, 8, source_hash, "hash variant (bit0==1): 8-byte source hash; replaces mtime+size"]
+    - [16, 0, code_object, "marshalled code object follows the header; not included here"]
+checks:
+  # A parser must read all 4 magic bytes (not just the version int), confirm the
+  # 0x0D 0x0A terminator, map the version int to a CPython release, and branch on
+  # flags bit0 to choose the timestamp vs hash layout for bytes 8..15.
+  magic_offset: 0
+  magic_terminator: "0d0a" # bytes 2..3 of the magic, always carriage-return/line-feed
+  version_int_little_endian_offset: 0
+  flags_offset: 4
+  hash_based_bit: 0 # flags bit0
+  check_source_bit: 1 # flags bit1
+  target_version: "3.11"
+  target_magic_int: 3495
+cases:
+  - id: valid
+    # Timestamp-based 3.11 header (flags=0). Body is a placeholder note, not a
+    # real marshalled code object.
+    hex: a70d0d0a0000000000f15365d2040000
+    note: "16-byte header only; a real file continues with a marshalled code object"
+    expect:
+      magic_ok: true
+      magic_bytes: a70d0d0a
+      magic_int: 3495
+      version: "3.11"
+      terminator_ok: true # bytes 2..3 == 0d 0a
+      flags: 0
+      hash_based: false
+      check_source: false
+      mtime: 1700000000 # 0x6553f100 LE -> 1700000000
+      source_size: 1234 # 0x000004d2 LE -> 1234
+  - id: hash_based_variant
+    # Same magic, flags=1 (bit0 set): bytes 8..15 are an 8-byte source hash and
+    # there is no mtime or source size. Included to exercise the layout branch.
+    hex: a70d0d0a010000000011223344556677
+    note: "flags bit0=1 selects hash-based invalidation; bytes 8..15 are the source hash"
+    expect:
+      magic_ok: true
+      magic_int: 3495
+      version: "3.11"
+      flags: 1
+      hash_based: true
+      check_source: false
+      source_hash: "0011223344556677"
+  - id: bad_magic
+    # First magic byte flipped (a7 -> a6). The version int becomes 3494, which is
+    # not any released CPython magic, and the header must be rejected outright
+    # rather than decoded as a near-neighbour version.
+    hex: a60d0d0a0000000000f15365d2040000
+    expect:
+      magic_ok: false
+      magic_int: 3494 # not a released CPython magic number
+      version: unknown
+  - id: wrong_version
+    # Valid, well-formed magic for a DIFFERENT CPython release (3.10, int 3439,
+    # bytes 6f 0d 0d 0a). A decompiler must refuse on version mismatch, not
+    # reinterpret 3.10 bytecode under 3.11 opcode semantics.
+    hex: 6f0d0d0a0000000000f15365d2040000
+    expect:
+      magic_ok: true # structurally a valid magic, with 0d 0a terminator
+      magic_int: 3439
+      version: "3.10"
+      version_matches_target: false # target is 3.11; a 3.11 tool must refuse
+result:
+  outcome: unobserved # set to recorded after a parser runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic fixture covering the 16-byte .pyc header only. The marshalled code
+    object that follows the header is not included; it requires a marshal format
+    matching the target CPython version, which this fixture does not model. A
+    decoded header establishes the file's declared CPython version and
+    invalidation mode; it does not establish that the magic matches the bytecode
+    actually present, nor that any given decompiler supports the contained
+    opcodes. A matching magic does not establish decompiler support for the
+    contained opcodes, and a passing header does not establish the code object
+    marshals or disassembles under a given tool.

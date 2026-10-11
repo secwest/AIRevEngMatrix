@@ -1,0 +1,96 @@
+schema_version: 1
+kind: encoded_string_fixtures
+format: xor_and_stack_string_blob
+description: >
+  A synthetic binary blob holding two obfuscated-string patterns at known
+  offsets, for checking a string-recovery step against bytes rather than a
+  scanner label. The blob is 27 bytes: distinctive filler (0xCC) surrounds (a)
+  an ASCII string encoded with a single-byte XOR key and (b) a "stack string"
+  present as raw constant bytes. Single-byte XOR is the classic FLOSS/capa
+  target where each ciphertext byte is plaintext XOR key (XOR is its own
+  inverse, so the same operation decodes); a stack string is a literal byte
+  sequence a compiler would otherwise MOV into local storage one or a few bytes
+  at a time. Recovery here is over the bytes only; no disassembly or emulation
+  is performed, so whether any code path builds or reaches either string is out
+  of scope by construction.
+blob_layout: # byte offset, size, contents
+  - [0, 4, "0xCC filler"]
+  - [4, 7, "XOR-encoded 'SECRET\\0' (key 0x5A)"]
+  - [11, 4, "0xCC filler"]
+  - [15, 8, "stack string 'flag{ok}' as raw constant bytes"]
+  - [23, 4, "0xCC filler"]
+patterns:
+  # ------------------------------------------------------------- single-byte XOR
+  - id: xor_single_byte
+    technique: single_byte_xor
+    description: >
+      The plaintext "SECRET" with a trailing NUL is XORed byte-for-byte with the
+      key 0x5A. The decisive recovered values are the key, the plaintext, and
+      the in-blob offset; because XOR is self-inverse, decoding is the same
+      operation applied again.
+    xor_key: "0x5A"
+    plaintext: "SECRET\u0000" # 7 bytes including the trailing NUL
+    offset_in_blob: 4
+    length_bytes: 7
+    encoded_hex: "091f19081f0e5a"
+    byte_map: # plaintext_byte ^ key = encoded_byte
+      - ["0x53 'S'", "0x5A", "0x09"]
+      - ["0x45 'E'", "0x5A", "0x1f"]
+      - ["0x43 'C'", "0x5A", "0x19"]
+      - ["0x52 'R'", "0x5A", "0x08"]
+      - ["0x45 'E'", "0x5A", "0x1f"]
+      - ["0x54 'T'", "0x5A", "0x0e"]
+      - ["0x00 NUL", "0x5A", "0x5a"]
+    checks:
+      key_recovered: "0x5A"
+      decode_is_self_inverse: true # ciphertext XOR key == plaintext
+      xor_decode_equals_plaintext: true # verified: encode then decode == "SECRET\0"
+  # ---------------------------------------------------------------- stack string
+  - id: stack_string
+    technique: stack_string_constant_bytes
+    description: >
+      A sequence of printable ASCII bytes spelling "flag{ok}", placed as raw
+      constants. In a real binary these bytes are the immediates of a run of
+      store instructions that assemble the string in a stack buffer; here only
+      the resulting byte sequence is modeled, not the instructions that would
+      write it.
+    plaintext: "flag{ok}"
+    offset_in_blob: 15
+    length_bytes: 8
+    bytes_hex: "666c61677b6f6b7d"
+    checks:
+      bytes_decode_as_ascii: true
+      recovered_equals_plaintext: true # verified: blob[15:23] == b"flag{ok}"
+expected:
+  blob_hex: "cccccccc091f19081f0e5acccccccc666c61677b6f6b7dcccccccc"
+  blob_length_bytes: 27
+  xor:
+    key: "0x5A"
+    offset: 4
+    encoded_hex: "091f19081f0e5a"
+    plaintext: "SECRET\u0000"
+    decode_ok: true # recovered bytes XOR 0x5A == plaintext
+  stack_string:
+    offset: 15
+    bytes_hex: "666c61677b6f6b7d"
+    plaintext: "flag{ok}"
+    decode_ok: true # blob[offset:offset+8] == plaintext bytes
+  # The hedge, stated as the point of the fixture: a recovered or decoded string
+  # is a candidate, not proof. It does not establish that any code path
+  # constructs the string, references the key, or ever reaches the site;
+  # FLOSS/capa-style discovery surfaces the candidate, and the decisive step is
+  # confirming the constructing/using code, which these bytes do not contain.
+  string_presence_implies_reachable_code: false
+result:
+  outcome: unobserved # set to recorded after a recovery tool runs this blob
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic blob with filler and two string patterns only; no code, imports,
+    or control flow are present. Recovering the XOR key and plaintext, or
+    reading the stack-string bytes, establishes that the candidate strings exist
+    at the stated offsets, not that a program decodes, builds, or uses them. A
+    single-byte XOR is trivially brute-forceable and carries no cryptographic
+    meaning; a real decoder loop, the key's origin, and the reachability of the
+    string site are confirmed at the code layer with disassembly or emulation,
+    which this fixture does not model.

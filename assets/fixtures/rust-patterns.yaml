@@ -35,6 +35,15 @@ cases:
   - id: parse_text
     argv: ["invalid"]
     stdout: "err:invalid\n"
+  - id: negative
+    argv: ["-1"]
+    stdout: "err:invalid\n"
+  - id: empty
+    argv: [""]
+    stdout: "err:invalid\n"
+  - id: fractional
+    argv: ["1.5"]
+    stdout: "err:invalid\n"
 analysis_checks:
   - Bind parse_input and the result cases to actual instructions.
   - Inspect the checked addition and its error return.

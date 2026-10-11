@@ -9,7 +9,7 @@ evaluate([Text | _]) ->
             Value = list_to_integer(Text),
             case Value of
                 N when N > 255 -> {error, invalid};
-                N when N > 248 -> {error, overflow};
+                N when N + 7 > 255 -> {error, overflow};
                 N -> {ok, N + 7}
             end
     end.

@@ -1,0 +1,98 @@
+schema_version: 1
+kind: bytecode_format_fixtures
+format: jvm_classfile_header
+description: >
+  Synthetic Java Virtual Machine .class file headers for checking a ClassFile
+  parser and its structural branches. All fields are big-endian (JVM
+  Specification, Java SE 17, section 4.1 "The ClassFile Structure"). The header
+  begins with magic 0xCAFEBABE, then minor_version (u2), major_version (u2),
+  constant_pool_count (u2), followed by the constant pool. major_version maps to
+  a Java release: 61 = Java 17, 52 = Java 8 (each later release adds one, section
+  4.1 table). constant_pool_count is the number of entries plus one, because the
+  pool is 1-indexed and index 0 is reserved. A .class file has no checksum or
+  digest, so this fixture asserts no integrity value; the decisive checks are the
+  magic, the version mapping, the pool count, and one decoded CONSTANT_Utf8
+  string. 0xCAFEBABE also collides with the Mach-O universal-binary FAT_MAGIC, so
+  the bytes after the magic, not the magic alone, decide which format this is.
+header_layout:
+  endian: big
+  fields: # offset, size, name, meaning
+    - [0, 4, magic, "0xCAFEBABE"]
+    - [4, 2, minor_version, "minor version (0 here)"]
+    - [6, 2, major_version, "major version (61 = Java 17, 52 = Java 8)"]
+    - [8, 2, constant_pool_count, "number of constant-pool entries + 1 (1-indexed)"]
+    - [10, "var", constant_pool, "constant_pool_count - 1 entries, each a tagged cp_info"]
+constant_pool_layout: # entries are 1-indexed; each starts with a 1-byte tag
+  - [1, CONSTANT_Utf8, "tag 1: u2 length then `length` bytes of modified UTF-8"]
+  - [7, CONSTANT_Class, "tag 7: u2 name_index into the constant pool (-> a Utf8)"]
+checks:
+  # A parser must verify magic, map major_version to a Java release, read
+  # constant_pool_count, and walk the pool honoring each tag's size. No digest
+  # or checksum is defined for a ClassFile, so none is computed or asserted.
+  magic_offset: 0
+  magic_value: 0xCAFEBABE
+  java_version_map: {52: "Java 8", 61: "Java 17"}
+  constant_pool_is_one_indexed: true
+  constant_pool_count_is_entries_plus_one: true
+  classfile_has_no_checksum_or_digest: true
+  macho_fat_magic_collision: >
+    0xCAFEBABE is big-endian Mach-O FAT_MAGIC; disambiguate by the following
+    bytes (a Mach-O fat header reads a nfat_arch count next, a ClassFile reads
+    minor_version then major_version).
+cases:
+  - id: valid
+    # magic | minor=0 | major=61 (Java 17) | cp_count=3 (2 entries) |
+    # #1 CONSTANT_Utf8 len=4 "Main" | #2 CONSTANT_Class name_index=1
+    hex: cafebabe0000003d00030100044d61696e070001
+    expect:
+      magic_ok: true
+      magic_bytes: "cafebabe"
+      minor_version: 0
+      major_version: 61
+      java_version: "Java 17"
+      constant_pool_count: 3
+      constant_pool_entries: 2
+      entry1:
+        index: 1
+        tag: 1               # CONSTANT_Utf8
+        length: 4
+        utf8: "Main"
+      entry2:
+        index: 2
+        tag: 7               # CONSTANT_Class
+        name_index: 1        # -> entry1 Utf8 "Main"
+  - id: bad_magic
+    # First magic byte flipped (0xCA -> 0xCB). A parser must reject before
+    # reading the version or the constant pool.
+    hex: cbfebabe0000003d00030100044d61696e070001
+    expect:
+      magic_ok: false
+  - id: truncated_constant_pool
+    # Bytes stop after the CONSTANT_Utf8 declared length (01 00 04) with none of
+    # the 4 promised string bytes present, and entry #2 missing. constant_pool_count
+    # claims 2 entries. A parser must report a short-input / truncated-pool error,
+    # not read past the buffer or treat the missing bytes as an empty string.
+    hex: cafebabe0000003d0003010004
+    expect:
+      magic_ok: true
+      major_version: 61
+      constant_pool_count: 3
+      constant_pool_entries_declared: 2
+      bytes_present: 13
+      parse_result: short_input   # Utf8 declares 4 bytes that are not present
+result:
+  outcome: unobserved # set to recorded after a parser runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic fixture holding only the ClassFile preamble and a two-entry
+    constant pool (one CONSTANT_Utf8, one CONSTANT_Class). It checks magic, the
+    major_version-to-Java-release mapping, constant_pool_count, and one decoded
+    Utf8 string. A full ClassFile continues after the pool with access_flags,
+    this_class, super_class, interfaces, fields, methods, and attributes, none
+    of which are present here, so a passing check does not establish a loadable
+    or verifiable class. .class files carry no checksum or signature; integrity
+    and authenticity of Java code come from the containing JAR (v1 signatures or
+    jarsigner / APK signing for Android), analyzed at its own layer. Matching
+    magic alone does not establish the format, because 0xCAFEBABE is shared with
+    Mach-O FAT_MAGIC.

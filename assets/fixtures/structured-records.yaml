@@ -1,0 +1,126 @@
+schema_version: 1
+kind: structured_record_fixtures
+format: protobuf_wire_and_cbor
+description: >
+  Synthetic serialized records for checking a structural decoder at the
+  wire/encoding level only, with no schema. The first value is a Protocol
+  Buffers message decoded to field numbers and wire types (protobuf encoding
+  spec, "Message Structure"; a field is a tag varint (field_number << 3 |
+  wire_type) followed by its payload, wire type 0 = VARINT, wire type 2 =
+  LEN/length-delimited). The second value is a CBOR data item decoded to major
+  types, keys, and values (RFC 8949). Both are recovered from bytes alone: no
+  .proto schema and no application profile are used, so field names, declared
+  types, and application meaning are out of scope by construction.
+records:
+  # ------------------------------------------------------------------ protobuf
+  - id: protobuf_message
+    format: protobuf_wire
+    spec: "protobuf encoding (Message Structure; tag = field_number<<3 | wire_type)"
+    description: >
+      A three-field message. Field 1 is a VARINT (wire type 0) with value 150;
+      its two-byte varint 96 01 is the canonical worked example from the
+      protobuf encoding spec. Field 2 is LEN (wire type 2), a length-delimited
+      string "hi". Field 3 is a VARINT (wire type 0) with value 1 (a bool-like
+      1, but the wire cannot distinguish bool, int32, enum, etc.).
+    wire_layout: # byte offset, size, bytes, meaning
+      - [0, 1, "08", "tag: field 1, wire type 0 (VARINT)"]
+      - [1, 2, "96 01", "varint 150 (0x96 & 0x7f = 0x16, (0x01 << 7) | 0x16 = 150)"]
+      - [3, 1, "12", "tag: field 2, wire type 2 (LEN)"]
+      - [4, 1, "02", "length prefix: 2 bytes follow"]
+      - [5, 2, "68 69", "payload bytes 'h' 'i'"]
+      - [7, 1, "18", "tag: field 3, wire type 0 (VARINT)"]
+      - [8, 1, "01", "varint 1"]
+    checks:
+      # Only field numbers and wire types are recoverable from the wire. A LEN
+      # field's payload is just bytes; interpreting 68 69 as the text "hi" is a
+      # decoding choice, not something the wire format asserts.
+      tag_formula: "field_number = tag >> 3, wire_type = tag & 0x07"
+      recoverable_from_wire: "field numbers and wire types only"
+      not_recoverable_from_wire: "field names, declared scalar types, message/enum identity"
+    expected:
+      hex: "089601120268691801"
+      length_bytes: 9
+      fields:
+        - field_number: 1
+          wire_type: 0
+          wire_type_name: VARINT
+          tag_byte: "0x08"
+          raw_value: 150
+        - field_number: 2
+          wire_type: 2
+          wire_type_name: LEN
+          tag_byte: "0x12"
+          length_prefix: 2
+          raw_payload_hex: "6869"
+          payload_as_utf8: "hi" # a decoding choice; the wire carries only bytes
+        - field_number: 3
+          wire_type: 0
+          wire_type_name: VARINT
+          tag_byte: "0x18"
+          raw_value: 1
+      # The hedge, encoded as a check: without a .proto the names/types are
+      # unknown. A decoder that reports field 3 as the bool `true`, or field 2
+      # as a declared `string`, has added a schema the bytes do not carry.
+      names_and_declared_types_known_from_wire: false
+      decode_equals_expected: true # round-tripped: encode -> decode -> compare
+  # ---------------------------------------------------------------------- cbor
+  - id: cbor_map
+    format: cbor
+    spec: "RFC 8949 (Concise Binary Object Representation)"
+    description: >
+      A map of two pairs, {1: "ok", 2: [10, 20]}. The initial byte of each item
+      encodes a major type in its high 3 bits and an argument (count or value)
+      in its low 5 bits. Integer keys and an array value exercise major types
+      0 (unsigned int), 3 (text string), 4 (array), and 5 (map).
+    wire_layout: # byte offset, size, bytes, meaning
+      - [0, 1, "a2", "major type 5 (map), 2 pairs"]
+      - [1, 1, "01", "major type 0 (unsigned int) 1 -- key"]
+      - [2, 1, "62", "major type 3 (text string), length 2 -- value"]
+      - [3, 2, "6f 6b", "text 'ok'"]
+      - [5, 1, "02", "major type 0 (unsigned int) 2 -- key"]
+      - [6, 1, "82", "major type 4 (array), 2 items -- value"]
+      - [7, 1, "0a", "major type 0 (unsigned int) 10"]
+      - [8, 1, "14", "major type 0 (unsigned int) 20"]
+    checks:
+      # Major type is the top 3 bits of the initial byte; the low 5 bits are the
+      # argument directly for values < 24. The whole item must consume exactly
+      # the available bytes with nothing trailing.
+      major_type_from_initial_byte: "major = initial_byte >> 5, arg = initial_byte & 0x1f"
+      item_consumes_all_bytes: true
+    expected:
+      hex: "a201626f6b02820a14"
+      length_bytes: 9
+      root:
+        major_type: 5
+        major_type_name: map
+        pairs: 2
+      items:
+        - key: {major_type: 0, value: 1}
+          value: {major_type: 3, text: "ok", length: 2}
+        - key: {major_type: 0, value: 2}
+          value:
+            major_type: 4
+            array: [{major_type: 0, value: 10}, {major_type: 0, value: 20}]
+      decoded_value: {1: "ok", 2: [10, 20]}
+      bytes_fully_consumed: true
+      decode_equals_expected: true # round-tripped: encode -> decode -> compare
+      # The hedge: a syntactically well-formed CBOR item is structurally decoded,
+      # not semantically resolved. Whether key 1 means "status" or key 2 means a
+      # coordinate pair is an application profile (CDDL, a COSE/CWT registry,
+      # etc.) the bytes do not carry.
+      application_meaning_resolved: false
+result:
+  outcome: unobserved # set to recorded after a decoder runs these records
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic records decoded to the wire/structural level only. For the
+    protobuf message, only field numbers and wire types are recoverable; field
+    names and declared scalar types require the .proto schema, which is
+    deliberately absent, so a bare VARINT cannot be shown to be a bool, enum, or
+    sint, and a LEN payload cannot be shown to be a string rather than nested
+    bytes. For the CBOR value, a successful structural decode establishes
+    well-formedness, not application meaning, which an out-of-band profile
+    (CDDL/COSE/CWT) would supply. A structural decode establishes neither that
+    the bytes came from a particular producer nor that any program would accept
+    or act on them.

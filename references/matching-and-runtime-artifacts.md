@@ -41,7 +41,7 @@ Template: [comparison and inventory](../assets/templates/comparison-inventory.ya
 
 Run capa and/or FLOSS only when the selected input is supported and their output helps answer the question. Preserve binary digest, tool/rule versions, input mode, warnings, and original structured output. Keep capa rule matches and FLOSS string categories distinct.
 
-For each decisive lead, inspect the supporting function/instruction or recovered buffer and its callers. A decoded string needs its decoding origin and, where meaningful, a checked reproduction. A match on library code can be present without an application path invoking it. Packed, partially analyzed, or unsupported inputs cannot justify conclusions from absent matches.
+For each decisive lead, inspect the supporting function/instruction or recovered buffer and its callers. A decoded string needs its decoding origin and, where meaningful, a checked reproduction. The [encoded-string fixture](../assets/fixtures/encoded-string.yaml) provides a known XOR-encoded string (key and plaintext) and a stack-constructed string with their in-blob offsets, while asserting that a recovered string is a candidate, not proof of a reachable path (see [format fixtures](format-fixtures.md)). A match on library code can be present without an application path invoking it. Packed, partially analyzed, or unsupported inputs cannot justify conclusions from absent matches.
 
 **Deliverable:** prioritized leads with exact locations, confirmed findings, rejected hypotheses, and unresolved coverage. Full raw output remains available without presenting every match as an established behavior.
 

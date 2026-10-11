@@ -1,0 +1,128 @@
+schema_version: 1
+kind: bytecode_format_fixtures
+format: android_dex_header
+description: >
+  Synthetic Android Dalvik executable (DEX) file headers for checking a DEX
+  header parser and its integrity branches. The header_item is 0x70 bytes and is
+  little-endian (AOSP dex-format: "File Layout" / "header_item", and the
+  "Byte-Swapping" note fixing endian_tag to ENDIAN_CONSTANT 0x12345678). The DEX
+  version used here is 035, so the magic is "dex\n035\0". Two integrity fields
+  cover different ranges and establish different things: the checksum is an
+  Adler-32 over all bytes from offset 12 to end, and the signature is a SHA-1
+  over all bytes from offset 32 to end. The signature therefore does not cover
+  the checksum field, while the checksum covers the signature. A valid Adler-32
+  does not establish the SHA-1, and neither establishes that the file was signed.
+  This fixture is a complete 0x70-byte header describing an otherwise empty DEX
+  (file_size == header_size == 0x70, all id/section sizes and offsets zero), so
+  the SHA-1 range [32:] and the Adler-32 range [12:] fall entirely inside the
+  header and the stored values are self-consistent.
+header_layout:
+  endian: little
+  size_bytes: 0x70
+  fields: # offset, size, name, meaning
+    - [0, 8, magic, "DEX_FILE_MAGIC: 64 65 78 0a 30 33 35 00 (\"dex\\n035\\0\")"]
+    - [8, 4, checksum, "Adler-32 (little-endian u32) of all bytes from offset 12 to end"]
+    - [12, 20, signature, "SHA-1 of all bytes from offset 32 to end"]
+    - [32, 4, file_size, "total file size in bytes"]
+    - [36, 4, header_size, "0x70 (size of this header)"]
+    - [40, 4, endian_tag, "ENDIAN_CONSTANT 0x12345678 (little-endian form)"]
+    - [44, 4, link_size, "size of the link section"]
+    - [48, 4, link_off, "offset of the link section"]
+    - [52, 4, map_off, "offset of the map_list"]
+    - [56, 4, string_ids_size, "count of string identifiers"]
+    - [60, 4, string_ids_off, "offset of the string_id list"]
+    - [64, 4, type_ids_size, "count of type identifiers"]
+    - [68, 4, type_ids_off, "offset of the type_id list"]
+    - [72, 4, proto_ids_size, "count of prototype identifiers"]
+    - [76, 4, proto_ids_off, "offset of the proto_id list"]
+    - [80, 4, field_ids_size, "count of field identifiers"]
+    - [84, 4, field_ids_off, "offset of the field_id list"]
+    - [88, 4, method_ids_size, "count of method identifiers"]
+    - [92, 4, method_ids_off, "offset of the method_id list"]
+    - [96, 4, class_defs_size, "count of class definitions"]
+    - [100, 4, class_defs_off, "offset of the class_def list"]
+    - [104, 4, data_size, "size of the data section"]
+    - [108, 4, data_off, "offset of the data section"]
+checks:
+  # A parser must verify magic, recompute the Adler-32 over bytes[12:] and the
+  # SHA-1 over bytes[32:], and keep three states distinct: header parsed,
+  # checksum (Adler-32) valid, signature (SHA-1) valid. Adler-32 is zlib's
+  # adler32; SHA-1 is the standard digest. Neither is a cryptographic signature.
+  magic_offset: 0
+  checksum_algorithm: "adler32 (zlib)"
+  checksum_covers: "bytes[12:] (all bytes from offset 12 to end)"
+  signature_algorithm: "sha1"
+  signature_covers: "bytes[32:] (all bytes from offset 32 to end)"
+  endian_tag_offset: 40
+  endian_tag_value: 0x12345678
+cases:
+  - id: valid
+    hex: 6465780a30333500300c123da5fc7bea8fa9ffaa52243540c8026066511b9fce7000000070000000785634120000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    expect:
+      magic_ok: true
+      magic_bytes: "6465780a30333500"
+      dex_version: "035"
+      file_size: 0x70
+      header_size: 0x70
+      endian_tag_ok: true          # 0x12345678 at offset 40
+      checksum_adler32: "0x3d120c30"       # u32 value
+      checksum_on_disk_le: "300c123d"      # little-endian bytes at offset 8
+      checksum_ok: true
+      signature_sha1: "a5fc7bea8fa9ffaa52243540c8026066511b9fce"
+      signature_ok: true
+      # all id/section counts and offsets are zero (empty dex)
+      string_ids_size: 0
+      type_ids_size: 0
+      proto_ids_size: 0
+      field_ids_size: 0
+      method_ids_size: 0
+      class_defs_size: 0
+      data_size: 0
+  - id: bad_checksum
+    # One content byte in the SHA-1-covered range is flipped (offset 44,
+    # link_size low byte: 00 -> 01). The stored checksum and signature fields
+    # are still those computed for `valid`. Recomputing the Adler-32 over
+    # bytes[12:] no longer matches the stored checksum, so the checksum fails.
+    # Because the flipped byte is at offset 44 it also lies in the SHA-1 range
+    # bytes[32:], so a freshly computed SHA-1 would differ from the stored
+    # signature too: the point is that a passing (or failing) Adler-32 says
+    # nothing about the SHA-1, and neither says anything about signing.
+    hex: 6465780a30333500300c123da5fc7bea8fa9ffaa52243540c8026066511b9fce7000000070000000785634120100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    expect:
+      magic_ok: true
+      checksum_ok: false           # adler32(bytes[12:]) != stored checksum
+      signature_ok: false          # sha1(bytes[32:]) != stored signature (byte 44 is in range)
+  - id: bad_magic
+    # First magic byte flipped (0x64 -> 0x65). A parser must reject before
+    # trusting file_size, the endian_tag, or either integrity field.
+    hex: 6565780a30333500300c123da5fc7bea8fa9ffaa52243540c8026066511b9fce7000000070000000785634120000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    expect:
+      magic_ok: false
+  - id: truncated
+    # Only 32 bytes are present: magic, checksum, and signature, with the header
+    # cut off before file_size (offset 32). A parser must report an
+    # end-of-input / short-header error, not read past the buffer or compute a
+    # SHA-1 over zero-filled invented bytes.
+    hex: 6465780a30333500300c123da5fc7bea8fa9ffaa52243540c8026066511b9fce
+    expect:
+      magic_ok: true
+      bytes_present: 32
+      header_size_declared: 0x70
+      signature_ok: short_input    # range bytes[32:] is empty; cannot be verified
+      checksum_ok: short_input
+result:
+  outcome: unobserved # set to recorded after a parser runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic fixture describing an empty DEX with no string, type, proto,
+    field, method, or class_def tables, no map_list, and no data section. It
+    checks magic decoding, the fixed header fields, and the two integrity
+    ranges only. A passing Adler-32 does not establish the SHA-1, a passing
+    SHA-1 does not establish the Adler-32, and neither establishes authenticity:
+    both are non-cryptographic or unkeyed integrity values that an editor can
+    recompute at will. APK signing (v1 JAR signatures, or the v2/v3 APK
+    Signing Block) lives outside the DEX file entirely and is analyzed at its
+    own layer. A real classes.dex also carries populated id tables and a
+    map_list whose offsets and counts must cross-check; those are not modeled
+    here.

@@ -15,7 +15,7 @@ Identify header/version, endianness where applicable, integer/number widths, con
 
 Decompile one nested prototype, compare it to opcode/register effects, then run a controlled case on the matching interpreter when behavior matters. Separately track C API/FFI and native/JIT calls. Recompilation can change instruction layout without changing the selected behavior.
 
-The [Lua fixture](../assets/fixtures/environment-patterns.lua) exercises a closure and protected call. [Profiles](environment-fixtures.md) cover source and standard-Lua bytecode. LuaJIT/Luau require separately generated inputs; a standard-Lua pass does not certify either engine. Add coroutine yield/resume, varargs and shared-upvalue cases for relevant targets.
+The [Lua fixture](../assets/fixtures/environment-patterns.lua) exercises a closure and protected call. [Profiles](environment-fixtures.md) cover source and standard-Lua bytecode. The [Lua bytecode header fixture](../assets/fixtures/lua-bytecode-header.yaml) gives a known Lua 5.4 `luac` header with the `LUAC_INT`/`LUAC_NUM` and endianness/size check-words as the checkable answer, including a reversed-`LUAC_INT` rejection case (see [format fixtures](format-fixtures.md)). LuaJIT/Luau require separately generated inputs; a standard-Lua pass does not certify either engine. Add coroutine yield/resume, varargs and shared-upvalue cases for relevant targets.
 
 ## Erlang and Elixir / BEAM
 

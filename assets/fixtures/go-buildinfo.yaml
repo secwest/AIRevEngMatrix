@@ -1,0 +1,80 @@
+schema_version: 1
+kind: native_format_fixtures
+format: go_buildinfo_header
+description: >
+  Synthetic Go buildinfo blob for checking a Go-binary identity/version probe.
+  The format is the one read by the standard library at src/debug/buildinfo
+  (decodeBuildInfo/decodeString) and written per src/runtime/debug/mod.go. A
+  14-byte magic sentinel "\xff Go buildinf:" is followed by 1 byte ptrSize and
+  1 byte of flags. In the modern self-contained format (Go 1.18+), bit 0x02 of
+  the flags byte means the version string and module info are stored inline
+  immediately after the 32-byte header as two length-prefixed strings, each an
+  unsigned LEB128 (uvarint, encoding/binary.Uvarint) length followed by that
+  many UTF-8 bytes. The low bit (0x01) of the flags byte is endianness
+  (0 = little). The sentinel plus the decoded version are a reliable identity
+  and version check from bytes; they do not establish that the module
+  dependency graph is intact or that the binary is unstripped.
+header_layout:
+  endian: little          # flags byte bit 0x01 clear
+  header_size_bytes: 32
+  fields:                 # [offset, size, name, meaning]
+    - [0, 14, magic, "\\xff Go buildinf: (FF 20 47 6F 20 62 75 69 6C 64 69 6E 66 3A)"]
+    - [14, 1, ptr_size, "pointer size in bytes (8 for 64-bit)"]
+    - [15, 1, flags, "bit 0x02 = inline self-contained format; bit 0x01 = big-endian"]
+    - [16, 16, padding, "unused in the inline format; header padded to 32 bytes"]
+  inline_data:            # begins at offset 32 when flags & 0x02
+    - [32, "uvarint+N", version_string, "length-prefixed Go toolchain version"]
+    - ["...", "uvarint+N", module_info, "length-prefixed module path / build info"]
+checks:
+  # A probe must match the 14-byte sentinel before trusting any later field,
+  # read ptrSize and the flags byte, and when bit 0x02 is set decode two
+  # uvarint-length-prefixed strings starting at offset 32. uvarint is LEB128:
+  # little-endian base-128, high bit = continuation.
+  magic_offset: 0
+  magic_checked_before_other_fields: true
+  inline_flag_bit: "0x02"
+  inline_data_offset: 32
+  string_encoding: "uvarint length prefix then that many UTF-8 bytes"
+expected:
+  blob_hex: "ff20476f206275696c64696e663a08020000000000000000000000000000000008676f312e32312e30106578616d706c652e636f6d2f72766d78"
+  magic_hex: "ff20476f206275696c64696e663a"
+  magic_ok: true
+  ptr_size: 8
+  flags_byte: "0x02"
+  inline_flag_set: true
+  endian: little
+  version_uvarint_prefix: "08"          # length 8 -> "go1.21.0"
+  version_string: "go1.21.0"
+  module_uvarint_prefix: "10"           # length 16 -> module path
+  module_info: "example.com/rvmx"
+cases:
+  - id: valid
+    # Magic matches, ptrSize = 8, inline bit set; the two inline strings decode
+    # to the Go version and the module path.
+    hex: "ff20476f206275696c64696e663a08020000000000000000000000000000000008676f312e32312e30106578616d706c652e636f6d2f72766d78"
+    expect:
+      magic_ok: true
+      ptr_size: 8
+      inline_flag_set: true
+      version_string: "go1.21.0"
+      module_info: "example.com/rvmx"
+  - id: bad_magic
+    # First sentinel byte flipped FF -> FE. A probe must reject before reading
+    # ptrSize, the flags byte, or any inline string.
+    hex: "fe20476f206275696c64696e663a08020000000000000000000000000000000008676f312e32312e30106578616d706c652e636f6d2f72766d78"
+    expect:
+      magic_ok: false
+result:
+  outcome: unobserved   # set to recorded after a probe runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic header with a single short inline module string and zeroed
+    padding; no real module dependency list, build settings, vcs stamps, or
+    symbol table are present. A matching sentinel and a decoded version string
+    establish that the bytes are a Go buildinfo blob reporting go1.21.0; they do
+    not establish that the full module dependency graph is present or intact,
+    that the binary is unstripped, or that the reported version matches the
+    toolchain that actually linked every object. The inline format here carries
+    no checksum over the strings, so corruption past the sentinel is not
+    detected by this check and is assessed separately.

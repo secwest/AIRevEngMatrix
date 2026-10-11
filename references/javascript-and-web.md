@@ -36,7 +36,7 @@ Export-shape comparison starts with an exact module/export selector on each side
 
 Mappings depend on the exact generated text, map URL, `sourceRoot`, source entries, and indexed-map sections where present. A map can supply locations while omitting original text; missing `sourcesContent` does not establish that source files are available. Referenced URLs or paths are untrusted locations and are resolved only within the investigation's acquisition scope. A stale map or a merely similar bundle does not establish an identity match.
 
-The [source-map specification](https://tc39.es/ecma426/) uses UTF-16 code units for JavaScript/CSS column offsets. Byte offsets and Unicode code-point counts can disagree with those coordinates. Each adapter records its API's line/column base and mapping bias; an unmapped span remains unmapped. A useful fixture includes a non-ASCII character and an unmapped generated span. Formatting or inferred module recovery retains its distinction from source text actually supplied by the build.
+The [source-map specification](https://tc39.es/ecma426/) uses UTF-16 code units for JavaScript/CSS column offsets. Byte offsets and Unicode code-point counts can disagree with those coordinates. Each adapter records its API's line/column base and mapping bias; an unmapped span remains unmapped. A useful fixture includes a non-ASCII character and an unmapped generated span; the [source-map fixture](../assets/fixtures/sourcemap.yaml) provides exactly this — a mapping into a UTF-16 column after an astral emoji and a generated span with no mapping (see [format fixtures](format-fixtures.md)). Formatting or inferred module recovery retains its distinction from source text actually supplied by the build.
 
 ## Browser capture rules
 

@@ -1,0 +1,82 @@
+schema_version: 1
+kind: native_format_fixtures
+format: macho_universal_fat_header
+description: >
+  Synthetic Mach-O universal (fat) binary header for checking a fat-table parser
+  and the per-slice coordinates it must keep distinct. The fat_header and each
+  fat_arch are stored BIG-ENDIAN on disk, regardless of the byte order of the
+  thin Mach-O images they point at (Apple mach-o/fat.h). The magic FAT_MAGIC
+  (0xCAFEBABE) selects the 32-bit fat_arch form used here; FAT_MAGIC_64
+  (0xCAFEBABF) selects a 64-bit form with u64 offset/size, not used in this
+  fixture. A universal binary contains DISTINCT per-arch code at each slice
+  offset; selecting the wrong slice analyzes the wrong code.
+header_layout:
+  endian: big            # fat_header and fat_arch are big-endian on disk
+  fat_header_size_bytes: 8
+  fat_arch_size_bytes: 20
+  fat_header:            # offset, size, name, meaning
+    - [0, 4, magic, "0xCAFEBABE = FAT_MAGIC (0xCAFEBABF = FAT_MAGIC_64)"]
+    - [4, 4, nfat_arch, "number of fat_arch structures that follow"]
+  fat_arch:             # offset within each 20-byte fat_arch, repeated nfat_arch times
+    - [0, 4, cputype, "cpu_type_t (big-endian)"]
+    - [4, 4, cpusubtype, "cpu_subtype_t (big-endian)"]
+    - [8, 4, offset, "file offset of this slice's thin Mach-O (big-endian)"]
+    - [12, 4, size, "size of this slice in bytes (big-endian)"]
+    - [16, 4, align, "slice alignment as a power of 2 (big-endian)"]
+checks:
+  # A parser must read the big-endian magic, confirm nfat_arch is plausible,
+  # then decode each 20-byte fat_arch and retain slice_offset, slice_size,
+  # cputype and cpusubtype per slice. The thin image at each offset has its own
+  # byte order and its own internal coordinates.
+  magic_offset: 0
+  magic_is_big_endian_on_disk: true
+  fat_arch_form: "32-bit (FAT_MAGIC); offset and size are u32"
+  slices_materialized: false   # header-only; slices are described, not present
+cases:
+  - id: valid
+    # Header-only, two slices. The thin Mach-O images at offset 0x4000 and
+    # 0x8000 are described by the table but not materialized in this fixture;
+    # the hex below is exactly the 8-byte fat_header plus two 20-byte fat_arch
+    # structures (48 bytes total).
+    hex: cafebabe000000020100000c0000000000004000000040000000000e010000070000000300008000000040000000000e
+    expect:
+      magic_ok: true
+      magic: "0xCAFEBABE"
+      magic_name: FAT_MAGIC
+      nfat_arch: 2
+      slice0:
+        cputype: "0x0100000C"
+        cputype_name: CPU_TYPE_ARM64
+        cpusubtype: 0
+        offset: 16384       # 0x4000
+        size: 16384         # 0x4000
+        align: 14           # 2**14 = 0x4000
+      slice1:
+        cputype: "0x01000007"
+        cputype_name: CPU_TYPE_X86_64
+        cpusubtype: 3
+        offset: 32768       # 0x8000
+        size: 16384         # 0x4000
+        align: 14           # 2**14 = 0x4000
+  - id: magic_collision_note
+    # 0xCAFEBABE is also the first four bytes of a Java class file. Byte order
+    # and nfat_arch plausibility disambiguate: a fat header stores this magic
+    # big-endian and is followed by a small, sane nfat_arch and in-range slice
+    # offsets, whereas a JVM class file follows the magic with minor/major
+    # version u16s that do not read as a plausible fat_arch count. The first
+    # four bytes alone do not establish which format is present.
+    shares_first_four_bytes_with: "Java class file magic (0xCAFEBABE)"
+    disambiguator: "fat header is big-endian with plausible nfat_arch and in-range slice offsets; JVM class magic is followed by version u16s, not a fat_arch count"
+result:
+  outcome: unobserved   # set to recorded after a parser runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Header-only fixture: the thin Mach-O images at the declared slice offsets
+    are described, not present, so no slice bytes, load commands, sections, or
+    signatures are included. A decoded fat table establishes the per-arch
+    coordinates (cputype, slice offset, slice size, align), not that a slice's
+    bytes are present, loadable, or signed; a section's original-file offset
+    equals slice offset plus the thin section offset only when that range is
+    validated in the actual file. Selecting a slice does not establish which
+    arch a given host would execute.

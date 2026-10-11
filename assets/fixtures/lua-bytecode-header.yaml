@@ -1,0 +1,94 @@
+schema_version: 1
+kind: bytecode_format_fixtures
+format: lua54_luac_header
+description: >
+  Synthetic Lua 5.4 precompiled-chunk (luac) headers for checking a bytecode
+  loader's header validation. The header and its check words are defined in the
+  Lua 5.4 source: lundump.c (checkHeader / loadHeader, LUAC_INT, LUAC_NUM) and
+  luaconf.h / lundump.h (LUA_SIGNATURE, LUAC_VERSION, LUAC_FORMAT, LUAC_DATA).
+  After the signature, version, format, and the LUAC_DATA sentinel, the header
+  records the sizes of Instruction, lua_Integer, and lua_Number, then writes a
+  known integer (LUAC_INT = 0x5678) and a known float (LUAC_NUM = 370.5). These
+  two words exist precisely so a loader built with different endianness or
+  number formats rejects the chunk; a passing header does not establish that the
+  function prototypes that follow decode under a given tool.
+header_layout:
+  endian: little # lua_Integer and lua_Number are written in host order; this host is LE
+  size_bytes: 31
+  fields: # offset, size, name, meaning
+    - [0, 4, signature, "LUA_SIGNATURE = 1b 4c 75 61 (ESC 'L' 'u' 'a')"]
+    - [4, 1, version, "LUAC_VERSION: 0x54 for Lua 5.4 (major*16 + minor)"]
+    - [5, 1, format, "LUAC_FORMAT: 0x00 = official format"]
+    - [6, 6, luac_data, "LUAC_DATA = 19 93 0d 0a 1a 0a; catches newline/EOF translation"]
+    - [12, 1, instruction_size, "sizeof(Instruction) = 4"]
+    - [13, 1, lua_integer_size, "sizeof(lua_Integer) = 8"]
+    - [14, 1, lua_number_size, "sizeof(lua_Number) = 8"]
+    - [15, 8, luac_int, "LUAC_INT = 0x5678 as lua_Integer (little-endian here)"]
+    - [23, 8, luac_num, "LUAC_NUM = 370.5 as lua_Number (IEEE754 double, little-endian here)"]
+    - [31, 0, body, "sizeupvalues byte + main function prototype follow; not included here"]
+checks:
+  # A loader must match the signature, reject a version != LUAC_VERSION, confirm
+  # the LUAC_DATA sentinel, confirm each size byte, and then confirm LUAC_INT and
+  # LUAC_NUM decode to the expected values under its own integer/float format.
+  signature_offset: 0
+  luac_data_offset: 6
+  luac_int_expected_hex: "7856000000000000" # 0x5678 as 8-byte little-endian
+  luac_num_expected_hex: "0000000000287740" # 370.5 as little-endian IEEE754 double
+cases:
+  - id: valid
+    # Full 31-byte Lua 5.4 header, little-endian host. Body (upvalue count + main
+    # prototype) is not included.
+    hex: 1b4c7561540019930d0a1a0a04080878560000000000000000000000287740
+    note: "31-byte header only; a real chunk continues with the main function prototype"
+    expect:
+      signature_ok: true
+      signature: "1b4c7561"
+      version: 84 # 0x54
+      version_name: "5.4"
+      format: 0
+      luac_data_ok: true
+      luac_data: "19930d0a1a0a"
+      instruction_size: 4
+      lua_integer_size: 8
+      lua_number_size: 8
+      luac_int_ok: true
+      luac_int: 22136 # 0x5678
+      luac_num_ok: true
+      luac_num: 370.5
+  - id: endianness_mismatch
+    # LUAC_INT bytes reversed (78 56 00.. -> 00 00 .. 56 78). A big-endian reader
+    # would read 0x5678 correctly, but a little-endian reader reads these bytes as
+    # 0x7856000000000000 and must reject on the integer-format check. The float
+    # bytes are left as in `valid` so the failure isolates to LUAC_INT.
+    hex: 1b4c7561540019930d0a1a0a04080800000000000056780000000000287740
+    expect:
+      signature_ok: true
+      version: 84
+      luac_data_ok: true
+      luac_int_ok: false # decodes to 0x7856000000000000 (8671118132548468736) on an LE reader
+      luac_int_decoded_le: 8671118132548468736
+  - id: version_mismatch
+    # Version byte 0x53 (Lua 5.3) with an otherwise 5.4-shaped header. A 5.4
+    # loader must reject on the version check before trusting later fields; the
+    # 5.3 chunk format differs and must not be reinterpreted as 5.4.
+    hex: 1b4c7561530019930d0a1a0a04080878560000000000000000000000287740
+    expect:
+      signature_ok: true
+      version: 83 # 0x53
+      version_name: "5.3"
+      version_matches_loader: false # loader is 5.4 (0x54); must refuse
+result:
+  outcome: unobserved # set to recorded after a loader runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic fixture covering the luac header and its check words only. The
+    sizeupvalues byte and the main function prototype (constants, instructions,
+    upvalues, debug info) that follow the header are not included. The LUAC_INT
+    and LUAC_NUM words detect a loader whose integer or float format differs from
+    the writer's; a header that passes them establishes format agreement, not
+    that the following function prototypes decode under a given tool, nor that
+    the chunk is complete or executable. The integer and number bytes here are
+    little-endian because this writer host is little-endian; a chunk written on a
+    big-endian host carries the same values in the opposite byte order, which is
+    exactly what the check words are there to catch.

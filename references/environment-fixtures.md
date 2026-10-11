@@ -28,6 +28,8 @@ For the ten listed cases, every new fixture prints a success value or a named er
 
 Use each YAML `argv` list directly. An empty argument and no argument are different cases. The contract covers the enumerated inputs; it is not a universal cross-language specification for Unicode digits, arbitrary-size numbers or whitespace. Extend the oracle explicitly before comparing those behaviors.
 
+The overflow case means different things across these languages, so the generated code differs even though the output matches. Fixed-width languages (Rust `checked_add`, and the C/C++/C#/Go/Swift equivalents) detect a `u8` wrap at the addition. Erlang has arbitrary-precision integers and cannot overflow a `u8`, so its fixture computes the sum and range-checks it (`N + 7 > 255`); the "overflow" case there is a deliberate boundary emulation, not a hardware overflow site. When assessing a decompiler, check the construct the selected language actually uses, not a `u8` wrap that is not present in the bytecode.
+
 ## Decompiler assessment
 
 1. Compile/run the original source for the selected profile and preserve its artifact and baseline outcomes.

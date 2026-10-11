@@ -1,0 +1,111 @@
+schema_version: 1
+kind: native_format_fixtures
+format: elf64_load_segment_map
+description: >
+  Synthetic minimal ELF64 little-endian executable header plus one PT_LOAD
+  program header whose p_memsz is larger than its p_filesz, modelling a
+  .bss-like zero-fill region (ELF64 gABI / System V ABI program header, elf.h).
+  The decisive checks are two address lookups: a file-backed virtual address
+  maps back to its original file offset, while an address in the zero-fill
+  window has NO file offset and must be reported as a synthesized zero, not a
+  byte read from the artifact.
+header_layout:
+  endian: little          # EI_DATA = ELFDATA2LSB
+  class: 64               # EI_CLASS = ELFCLASS64
+  elf64_ehdr_size_bytes: 64
+  elf64_phdr_size_bytes: 56
+  e_ident:                # offset, size, name, meaning (first 16 bytes)
+    - [0, 4, EI_MAG, "0x7F 'E' 'L' 'F'"]
+    - [4, 1, EI_CLASS, "2 = ELFCLASS64"]
+    - [5, 1, EI_DATA, "1 = ELFDATA2LSB (little-endian)"]
+    - [6, 1, EI_VERSION, "1 = EV_CURRENT"]
+    - [7, 1, EI_OSABI, "0 = ELFOSABI_SYSV"]
+    - [8, 1, EI_ABIVERSION, "0"]
+    - [9, 7, EI_PAD, "zero padding to 16 bytes"]
+  elf64_ehdr:             # offsets within the 64-byte header (after e_ident)
+    - [16, 2, e_type, "2 = ET_EXEC"]
+    - [18, 2, e_machine, "0x3E = EM_X86_64"]
+    - [20, 4, e_version, "1"]
+    - [24, 8, e_entry, "0x400000"]
+    - [32, 8, e_phoff, "64 (program header table follows the ELF header)"]
+    - [40, 8, e_shoff, "0 (no section header table in this fixture)"]
+    - [48, 4, e_flags, "0"]
+    - [52, 2, e_ehsize, "64"]
+    - [54, 2, e_phentsize, "56"]
+    - [56, 2, e_phnum, "1"]
+    - [58, 2, e_shentsize, "0"]
+    - [60, 2, e_shnum, "0"]
+    - [62, 2, e_shstrndx, "0"]
+  elf64_phdr:             # offsets within the 56-byte program header (ELF64 field order)
+    - [0, 4, p_type, "1 = PT_LOAD"]
+    - [4, 4, p_flags, "5 = PF_R | PF_X"]
+    - [8, 8, p_offset, "0 (file offset of the segment)"]
+    - [16, 8, p_vaddr, "0x400000 (virtual address)"]
+    - [24, 8, p_paddr, "0x400000"]
+    - [32, 8, p_filesz, "0x100 (bytes present in the file)"]
+    - [40, 8, p_memsz, "0x200 (bytes occupied in memory; > p_filesz)"]
+    - [48, 8, p_align, "0x1000"]
+checks:
+  # A parser must read e_ident (class 64, data LE), decode the Ehdr, walk e_phnum
+  # program headers of e_phentsize bytes at e_phoff, and for a PT_LOAD segment
+  # distinguish the file-backed window [p_vaddr, p_vaddr+p_filesz) from the
+  # zero-fill window [p_vaddr+p_filesz, p_vaddr+p_memsz). Only the file-backed
+  # window has a file offset: file_offset = p_offset + (vaddr - p_vaddr).
+  magic_offset: 0
+  file_backed_window: "[p_vaddr, p_vaddr + p_filesz)  =>  0x400000 .. 0x4000FF"
+  zero_fill_window: "[p_vaddr + p_filesz, p_vaddr + p_memsz)  =>  0x400100 .. 0x4001FF"
+  address_to_offset_formula: "p_offset + (vaddr - p_vaddr), valid only while (vaddr - p_vaddr) < p_filesz"
+cases:
+  - id: valid
+    # The hex is the 64-byte ELF header followed by the single 56-byte PT_LOAD
+    # program header (120 bytes total). The segment's file-backed window covers
+    # this header region (offsets 0x00..0xFF), so file offset 0x50 falls on a
+    # concrete byte materialized below; the payload beyond 0x77 up to 0xFF is
+    # not materialized and is irrelevant to the address-mapping checks.
+    hex: 7f454c4602010100000000000000000002003e0001000000000040000000000040000000000000000000000000000000000000004000380001000000000000000100000005000000000000000000000000004000000000000000400000000000000100000000000000020000000000000010000000000000
+    expect:
+      magic_ok: true
+      ei_class: 64
+      ei_data: little_endian
+      e_type: 2            # ET_EXEC
+      e_machine: "0x3E"    # EM_X86_64
+      e_phnum: 1
+      segment0:
+        p_type: PT_LOAD
+        p_offset: 0
+        p_vaddr: "0x400000"
+        p_filesz: "0x100"
+        p_memsz: "0x200"
+        memsz_gt_filesz: true
+  - id: addr_file_backed
+    # Decisive check 1: an address inside the file-backed window maps to a
+    # concrete file offset and thus back to an original byte.
+    address: "0x400050"
+    expect:
+      in_segment: true
+      backing: file_backed
+      file_offset: "0x50"          # p_offset(0) + (0x400050 - 0x400000)
+      byte_at_offset: "0x00"       # concrete byte present in the materialized header
+  - id: addr_zero_fill
+    # Decisive check 2: an address inside the zero-fill (.bss-like) window is in
+    # the segment but has NO file offset. A mapper returns a synthesized zero
+    # here; it must not invent a file offset or read a byte from the artifact.
+    address: "0x400150"
+    expect:
+      in_segment: true
+      backing: zero_fill
+      file_offset: null            # no file offset exists for this address
+      value: "synthesized zero (not a byte read from the file)"
+result:
+  outcome: unobserved   # set to recorded after a parser runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic header-only fixture: no section header table, dynamic segment,
+    symbols, relocations, or materialized segment payload beyond the header
+    region. A correct pair of address lookups establishes that the loader map
+    distinguishes file-backed bytes from zero-fill, not that the image loads,
+    links, or runs. The lookups use the static load map only; a runtime address
+    additionally depends on the load bias or slide for a PIE (ET_DYN), which
+    this ET_EXEC fixture does not model. A synthesized zero is distinct from a
+    byte read from the artifact.

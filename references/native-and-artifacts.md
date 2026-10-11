@@ -68,3 +68,5 @@ Artifact, function, bundle and behavior comparisons use a tiered method: byte di
 - A crash module build ID mismatch is surfaced rather than silently symbolized against the wrong file.
 - A valid zero-fill memory range has no invented file offset; a file-backed range maps back to its original bytes.
 - A call graph containing incompatible branch conditions is reported as a static path without claiming that one execution traverses it.
+
+Fixtures: the [Mach-O fat](../assets/fixtures/macho-fat.yaml) and [ELF load-map](../assets/fixtures/elf-loadmap.yaml) fixtures make the first and fifth examples checkable against bytes, and the [EVM dispatch](../assets/fixtures/evm-dispatch.yaml) fixture checks selector dispatch offsets; see [format fixtures](format-fixtures.md).

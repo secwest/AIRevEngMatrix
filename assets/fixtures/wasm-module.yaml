@@ -1,0 +1,113 @@
+schema_version: 1
+kind: bytecode_format_fixtures
+format: wasm_binary_module
+description: >
+  A hand-assembled WebAssembly binary module for checking a Wasm decoder and its
+  error branches. The module encodes the 8-byte preamble (magic "\0asm" then a
+  little-endian u32 version) followed by sections, each a 1-byte section id, an
+  unsigned LEB128 size, and that many content bytes (WebAssembly Core
+  Specification, Binary Format, sections 5.1-5.5). This module declares one
+  function type () -> i32, one function of that type, an export named "answer"
+  binding func index 0, and a code body `i32.const 42; end`. Section ids and the
+  export table are decodable from the bytes; original source, internal symbol
+  names, and anything beyond the export table are not recoverable from them.
+preamble_layout:
+  endian: little # the version field; section bytes are a byte stream
+  size_bytes: 8
+  fields: # offset, size, name, meaning
+    - [0, 4, magic, "0x00 0x61 0x73 0x6D = \\0asm"]
+    - [4, 4, version, "0x01 0x00 0x00 0x00 = 1 (u32 LE)"]
+section_layout:
+  encoding: "id: 1 byte | size: unsigned LEB128 | contents: size bytes"
+  sections: # id, name, what the contents encode here
+    - [1, type, "vec(functype); one functype 0x60 () -> i32"]
+    - [3, function, "vec(typeidx); one entry, type index 0"]
+    - [7, export, "vec(export); name 'answer', kind 0x00 (func), index 0"]
+    - [10, code, "vec(code); one body: 0 locals, i32.const 42 (0x41 0x2A), end (0x0B)"]
+checks:
+  # A decoder must verify the magic and version, then walk sections by reading
+  # id + LEB128 size and advancing exactly size bytes. A section whose declared
+  # size runs past the remaining input is a decode error, not a short read to be
+  # zero-filled. LEB128 sizes are unsigned, least-significant group first.
+  magic_offset: 0
+  version_is_u32_le: true
+  section_size_is_unsigned_leb128: true
+  section_size_must_not_exceed_remaining_bytes: true
+expected:
+  # Canonical decode of the `valid` case below.
+  module_hex: 0061736d010000000105016000017f03020100070a0106616e7377657200000a06010400412a0b
+  module_length: 39
+  magic_ok: true
+  version: 1
+  section_inventory: # [id, declared_size_bytes]
+    - [1, 5]
+    - [3, 2]
+    - [7, 10]
+    - [10, 6]
+  type_section:
+    count: 1
+    functype_form: "0x60"
+    params: []
+    results: ["i32 (0x7f)"]
+  function_section:
+    count: 1
+    type_index: 0
+  export_section:
+    count: 1
+    export0:
+      name: "answer"
+      kind: "0x00 (func)"
+      index: 0
+  code_section:
+    count: 1
+    body_size: 4
+    locals_count: 0
+    body_expr_hex: "412a0b" # i32.const 42 ; end
+    decoded: "i32.const 42; end"
+cases:
+  - id: valid
+    hex: 0061736d010000000105016000017f03020100070a0106616e7377657200000a06010400412a0b
+    expect:
+      magic_ok: true
+      version: 1
+      section_ids: [1, 3, 7, 10]
+      section_sizes: [5, 2, 10, 6]
+      export_name: "answer"
+      export_kind: 0 # func
+      export_func_index: 0
+      function_type_index: 0
+      code_body_hex: "0041 2a0b" # 0 locals ; i32.const 42 ; end
+      decode_ok: true
+  - id: bad_magic
+    # First magic byte flipped 0x00 -> 0x01; a decoder must reject before reading
+    # the version or any section.
+    hex: 0161736d010000000105016000017f03020100070a0106616e7377657200000a06010400412a0b
+    expect:
+      magic_ok: false
+      decode_ok: false
+  - id: truncated_section
+    # Byte-identical to `valid` except the code section (id 10) size byte is
+    # changed 0x06 -> 0x20: the section declares 32 content bytes but only 6
+    # follow. A decoder must raise an end-of-input / oversized-section error, not
+    # read past the buffer or fabricate the missing 26 bytes.
+    hex: 0061736d010000000105016000017f03020100070a0106616e7377657200000a20010400412a0b
+    expect:
+      magic_ok: true
+      version: 1
+      failing_section_id: 10
+      declared_section_size: 32
+      bytes_remaining_after_size: 6
+      decode_ok: false # oversized section: declared size exceeds remaining input
+result:
+  outcome: unobserved # set to recorded after a decoder runs these cases
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic module with no custom name section, DWARF, producers section, or
+    signature. The section ids, sizes, the export name "answer", its func index,
+    and the function's type index are all recoverable from the bytes, and the
+    decode errors are forced by the structure. A passing decode establishes that
+    the byte stream is a well-formed module with this inventory; it does not
+    establish the module's original source language, internal (non-exported)
+    function names, intended behavior, or that any runtime would instantiate or
+    accept it. Names beyond the export table are not implied by a valid decode.

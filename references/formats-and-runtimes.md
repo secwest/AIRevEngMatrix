@@ -48,6 +48,8 @@ For readable pseudocode, [WABT](https://github.com/WebAssembly/wabt) includes `w
 
 **Deliverable:** interface and code explanation, decisive instruction/index locations, host-boundary dependencies, and optional runtime checks. Text output is a representation of the module, not recovered high-level source.
 
+Fixture: the [Wasm module fixture](../assets/fixtures/wasm-module.yaml) gives a known `\0asm` header, section inventory, and export-to-function-index mapping, with a truncated-section error case; see [format fixtures](format-fixtures.md).
+
 ## JVM classes and archives
 
 Template: [runtime study](../assets/templates/runtime-study.yaml), family `jvm`.
@@ -57,6 +59,8 @@ Inventory JAR/ZIP members, multi-release variants, nested archives, manifest ent
 Use Vineflower or [CFR](https://www.benf.org/other/cfr/) for supported readable reconstruction and retain the exact options, dependency classpath, diagnostics, and input/output mapping. Check decisive branches, exception tables, invokedynamic/bootstrap relationships, and field/method references against bytecode. Static initializers, reflection, classloader behavior, and JNI form runtime boundaries. Static inspection does not initialize classes or launch a JAR. The [language guide](language-decompilation.md) distinguishes Java-shaped output from recovery of original Kotlin/Scala constructs.
 
 **Deliverable:** class/method inventory, reconstructed code, descriptor-anchored call paths, unresolved dynamic dependencies, and bytecode checks. A successfully recompiled reconstruction is an additional check, not proof of equivalent behavior.
+
+Fixture: the [JVM class fixture](../assets/fixtures/java-classfile.yaml) checks the `0xCAFEBABE` magic, the version-to-release mapping, and a constant-pool decode (a class file has no integrity field); see [format fixtures](format-fixtures.md).
 
 ## Python bytecode and packaged applications
 
@@ -70,6 +74,8 @@ Build function/module relationships from code-object identities and instruction 
 
 **Deliverable:** package/module inventory, version-qualified disassembly, code-object relationships, and reconstruction limits. Unsupported bytecode remains explicitly unsupported.
 
+Fixture: the [pyc header fixture](../assets/fixtures/pyc-header.yaml) checks the magic-to-version decode and the PEP 552 timestamp/hash flag, with a wrong-version refusal case; see [format fixtures](format-fixtures.md).
+
 ## Go metadata recovery
 
 Template: [runtime study](../assets/templates/runtime-study.yaml), family `go`.
@@ -77,5 +83,7 @@ Template: [runtime study](../assets/templates/runtime-study.yaml), family `go`.
 Run GoReSym against exact bytes and preserve its structured output. Record supported build/runtime metadata, function ranges/names, source mappings, and types when recovered. Verify representative function boundaries against a disassembler and reconcile file/image/load coordinates before importing names into an analysis database.
 
 Compiler/runtime versions affect ABI, stack growth, interfaces, closures, and scheduler routines. A recovered name helps identify a candidate function but does not prove its semantics or source availability. cgo and assembly boundaries require native calling-convention checks. Symbol import is a database mutation with its own readback and collision policy.
+
+Fixture: the [Go buildinfo fixture](../assets/fixtures/go-buildinfo.yaml) checks the `\xff Go buildinf:` sentinel, pointer size, and inline version string (`go1.21.0`) as a bytes-level identity check; see [format fixtures](format-fixtures.md).
 
 **Deliverable:** recovered metadata, checked address mappings, function/type annotations where requested, and gaps caused by stripping, packing, or unsupported layouts.

@@ -32,7 +32,7 @@ Representative cases cover an allocated closure, a tagged or packed value, a fai
 
 ## Smart-contract development environments
 
-[Heimdall-rs](https://github.com/Jon-Becker/heimdall-rs) is a candidate for supported EVM disassembly/decompilation and interface inference. Pair it with a fork-compatible instruction reader and a local execution fixture when behavior matters. Selectors and signature databases can suggest names without uniquely establishing a full ABI or source.
+[Heimdall-rs](https://github.com/Jon-Becker/heimdall-rs) is a candidate for supported EVM disassembly/decompilation and interface inference. Pair it with a fork-compatible instruction reader and a local execution fixture when behavior matters. Selectors and signature databases can suggest names without uniquely establishing a full ABI or source. The [EVM dispatch fixture](../assets/fixtures/evm-dispatch.yaml) gives a known selector-dispatch fragment with the `PUSH4` constant and `JUMPI`/`JUMPDEST` offsets as the checkable answer, while asserting the selector's signature and parameter names are a database candidate, not decoded (see [format fixtures](format-fixtures.md)).
 
 1. Bind chain-independent bytecode identity and creation versus runtime form. For a chain observation, record chain, block and relevant account/state identities.
 2. Identify compiler metadata where retained, fork rules, dispatch, revert/return paths, events and storage accesses. Separate proxy code from implementation and preserve delegate-call storage context.

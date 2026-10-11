@@ -6,6 +6,8 @@ Template: [coverage assessment](../assets/templates/coverage-assessment.yaml). [
 
 The [development-environment index](development-environments.md) supplies detailed workflows across compiler/runtime families. Its [fixture profiles](environment-fixtures.md) distinguish available source examples, required SDK-specific examples, baseline execution and actual decompiler assessment.
 
+The `fixture checked` state is only claimed where a known-answer fixture actually ships. Today that is the eleven [firmware fixtures](firmware-fixtures.md), the twelve [format fixtures](format-fixtures.md) (Mach-O, ELF, DEX, JVM class, `.pyc`, Lua, Wasm, source map, Protobuf/CBOR, encoded string, EVM, Go buildinfo), the [Rust](../assets/fixtures/rust-patterns.yaml) and [environment](environment-fixtures.md) behavior fixtures, and the [Kaitai](../assets/templates/framed-record.ksy) example. Other routes reach only `documented` or `engine available`; a byte-level fixture is the backlog for closing that gap, not an implied state.
+
 ## Target and method routes
 
 | Target or question | Primary route | Reusable record | Target-dependent boundary |

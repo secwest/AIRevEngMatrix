@@ -1,0 +1,135 @@
+schema_version: 1
+kind: source_map_fixtures
+format: source_map_v3
+description: >
+  A JavaScript Source Map (version 3) over a tiny minified generated file, for
+  checking a source-map consumer and its VLQ decoder. The .map is JSON with
+  version 3, a sources list, a names list, and a `mappings` string of
+  semicolon-separated generated lines, each a comma-separated list of segments;
+  every segment is one or more Base64 VLQ numbers (Source Map Revision 3
+  Proposal). Fields are: generated column, source index, original line, original
+  column, name index; all are deltas from the previous segment, the generated
+  column resets each generated line, and the other four accumulate across the
+  whole string. Lines and columns are zero-based, and columns are counted in
+  UTF-16 code units. A source map recovers original positions and names only
+  where a segment exists and only if the map is acquired; it does not recover
+  erased logic and does not guarantee the original source bytes.
+segment_layout:
+  base64_alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  vlq: "6 bits per digit: bit 5 = continuation, low 5 = data; group 1 LSB is the sign"
+  fields: # index, name, meaning (all deltas)
+    - [0, generated_column, "zero-based, resets each generated line"]
+    - [1, source_index, "index into sources[]"]
+    - [2, original_line, "zero-based line in the source"]
+    - [3, original_column, "zero-based UTF-16 column in the source"]
+    - [4, name_index, "index into names[]; absent when a segment has 4 fields"]
+checks:
+  columns_are_utf16_code_units: true
+  generated_column_resets_each_line: true
+  source_line_col_name_accumulate_across_string: true
+  trailing_semicolon_means_generated_line_with_no_segments: true
+generated_file:
+  # Two lines. Line 0 is minified code; line 1 is the sourceMappingURL comment
+  # and carries no segments. The astral emoji U+1F600 occupies two UTF-16 code
+  # units, so columns after it differ from a code-point count.
+  name: app.js
+  line0: 'const msg="😀 hi";console.log(msg)'
+  line1: "//# sourceMappingURL=app.js.map"
+original_source:
+  # sources[0], also embedded as sourcesContent[0] in the .map below.
+  name: original.ts
+  line0: 'const msg = "😀 hi"'
+  line1: "console.log(msg)"
+map_json: |
+  {"version":3,"file":"app.js","sources":["original.ts"],"sourcesContent":["const msg = \"😀 hi\"\nconsole.log(msg)"],"names":["msg"],"mappings":"AAAA,MAAMA,QAAU,IAChB,YAAYA;"}
+expected:
+  version: 3
+  sources: ["original.ts"]
+  names: ["msg"]
+  mappings: "AAAA,MAAMA,QAAU,IAChB,YAAYA;"
+  # Fully decoded segments (absolute values after accumulating the deltas),
+  # computed by decoding the VLQ above. Generated line 0 has five segments;
+  # generated line 1 (after the trailing ';') has none.
+  generated_line_0:
+    - seg: "AAAA"
+      gen_col: 0
+      source_index: 0
+      original_line: 0
+      original_column: 0
+      name_index: null
+      note: "'const' keyword -> original.ts (0,0)"
+    - seg: "MAAMA"
+      gen_col: 6
+      source_index: 0
+      original_line: 0
+      original_column: 6
+      name_index: 0 # names[0] = "msg"
+      note: "the 'm' of msg -> original.ts (0,6), name 'msg'"
+    - seg: "QAAU"
+      gen_col: 14
+      source_index: 0
+      original_line: 0
+      original_column: 16
+      name_index: null
+      note: >
+        the 'h' of the string literal. Original column 16 is a UTF-16 offset:
+        the emoji at columns 13-14 is one code point but two UTF-16 units, so a
+        code-point count would place 'h' at 15.
+    - seg: "IAChB"
+      gen_col: 18
+      source_index: 0
+      original_line: 1
+      original_column: 0
+      name_index: null
+      note: "'console' -> original.ts (1,0); original_column delta is -16"
+    - seg: "YAAYA"
+      gen_col: 30
+      source_index: 0
+      original_line: 1
+      original_column: 12
+      name_index: 0 # names[0] = "msg"
+      note: "the 'msg' argument -> original.ts (1,12), name 'msg'"
+  generated_line_1:
+    segments: [] # trailing ';' yields a generated line with no mappings
+cases:
+  - id: mapped_position
+    # A known generated position resolves to a known original position.
+    query: {generated_line: 0, generated_column: 30}
+    expect:
+      matched_segment: "YAAYA"
+      source_index: 0
+      source: "original.ts"
+      original_line: 1
+      original_column: 12
+      name_index: 0
+      name: "msg"
+  - id: mapped_utf16_column
+    # The segment whose original column lands past the astral emoji.
+    query: {generated_line: 0, generated_column: 14}
+    expect:
+      matched_segment: "QAAU"
+      source_index: 0
+      source: "original.ts"
+      original_line: 0
+      original_column: 16 # UTF-16 code units, not code points
+      name_index: null
+  - id: unmapped_span
+    # Generated line 1 has no segments, so no position on it maps anywhere.
+    query: {generated_line: 1, generated_column: 0}
+    expect:
+      mapped: false
+      reason: "no segment on this generated line"
+result:
+  outcome: unobserved # set to recorded after a consumer decodes these mappings
+  parser_engine: null
+  parser_version: null
+  limitations: >
+    Synthetic map with one source and one name. The decoded segments, the
+    UTF-16 original columns, the name bindings, and the unmapped line are all
+    recoverable from the bytes of the .map plus the generated file. A correct
+    decode establishes the position and name recovery the map encodes; it does
+    not establish that the map matches any particular build output, that the
+    sourcesContent is the true original (a map can carry altered or absent
+    source), or that positions can be recovered where no segment exists. A
+    source map is a reference that helps only if it is acquired and only where
+    mappings are present; it does not reconstruct logic the minifier discarded.

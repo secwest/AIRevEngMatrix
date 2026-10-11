@@ -206,6 +206,8 @@ The [environment fixtures](references/environment-fixtures.md) add C++, C#, Java
 
 The [firmware fixtures](references/firmware-fixtures.md) are eleven synthetic, known-answer inputs for firmware parsers and base inference: a uImage header (valid, bad-payload-CRC, truncated, bad-magic), a Cortex-M vector table, a GPT header and entry array, Intel HEX records, an Android sparse image and boot header, a flattened devicetree, an ext4 superblock, and MCUboot, UEFI firmware-volume, and ESP32 image headers. Each integrity field is computed with its real algorithm (zlib CRC32, a 16-bit sum, a 1-byte XOR, or SHA-256), so a parser's CRC, checksum, hash, expansion, and load-base logic can be scored against a fixed answer, keeping the fixture check separate from a result on a real image.
 
+The [format fixtures](references/format-fixtures.md) extend the same pattern to twelve non-firmware targets: Mach-O fat and ELF load-map headers, Android DEX and JVM class files, CPython `.pyc` and Lua 5.4 `luac` headers, a WebAssembly module, a Source Map v3 with a UTF-16 column, Protobuf and CBOR records, an XOR/stack-string blob, EVM selector-dispatch bytecode, and a Go buildinfo header. Integrity fields (DEX Adler-32 and SHA-1, and the hashes above) are computed with their real algorithms and recomputed independently; formats with no integrity field are checked structurally with no invented digest. Each makes a previously narrative acceptance example falsifiable against bytes.
+
 ## Use and repository guide
 
 The repository root is a skill directory. It can be installed under the name `reverse-engineer-direct` in a compatible host's skills directory, or used as a reference library. An investigation needs a concrete question and the relevant artifact, capture, or accessible target. Tool installation and device access depend on the execution environment.
@@ -224,6 +226,7 @@ The repository root is a skill directory. It can be installed under the name `re
 | [Embedded Linux services](references/embedded-linux-services.md) | Boot-to-service path: filesystem selection, init families, dispatch, reachability |
 | [Firmware lab](references/firmware-lab.md) | Execution models, chip/debug acquisition, signals, and CAN |
 | [Firmware fixtures](references/firmware-fixtures.md) | Known-answer uImage header and Cortex-M base-inference checks |
+| [Format fixtures](references/format-fixtures.md) | Known-answer native, bytecode, web, protocol, and string checks |
 | [Testing and constraints](references/testing-and-constraints.md) | Fuzz harnesses, protocol campaigns, failure replay, symbolic inputs, and taint |
 | [Formats and runtimes](references/formats-and-runtimes.md) | Kaitai parsers, Wasm, JVM, Python bytecode, and Go metadata |
 | [Matching and runtime artifacts](references/matching-and-runtime-artifacts.md) | Function matching, software inventory, capability/string discovery, memory, and rr |

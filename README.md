@@ -204,7 +204,7 @@ The [Rust fixture](assets/fixtures/rust-patterns.rs) and its [seven behavior cas
 
 The [environment fixtures](references/environment-fixtures.md) add C++, C#, Java, Go, Swift, Python, JavaScript, Dart, Lua and Erlang sources with ten shared behavior cases and compiler-specific profiles. They exercise dispatch, closures, errors, async lowering or cleanup. Additional APK, Flutter, game-engine, Wasm and other SDK profiles have explicit fixture specifications. Baseline compilation/execution and decompiler reconstruction are recorded separately.
 
-The [firmware fixtures](references/firmware-fixtures.md) add a synthetic uImage header with valid, bad-payload-CRC, truncated and bad-magic cases, and a Cortex-M vector-table image with a single consistent load base. They check a header parser's CRC branches and load-base inference against known answers, keeping the fixture check separate from a result on a real image.
+The [firmware fixtures](references/firmware-fixtures.md) are eleven synthetic, known-answer inputs for firmware parsers and base inference: a uImage header (valid, bad-payload-CRC, truncated, bad-magic), a Cortex-M vector table, a GPT header and entry array, Intel HEX records, an Android sparse image and boot header, a flattened devicetree, an ext4 superblock, and MCUboot, UEFI firmware-volume, and ESP32 image headers. Each integrity field is computed with its real algorithm (zlib CRC32, a 16-bit sum, a 1-byte XOR, or SHA-256), so a parser's CRC, checksum, hash, expansion, and load-base logic can be scored against a fixed answer, keeping the fixture check separate from a result on a real image.
 
 ## Use and repository guide
 

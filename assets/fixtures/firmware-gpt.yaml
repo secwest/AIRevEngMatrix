@@ -1,0 +1,60 @@
+schema_version: 1
+kind: firmware_format_fixtures
+format: gpt_header_and_entries
+description: >
+  Synthetic GUID Partition Table primary header (92 bytes) and a 4-entry
+  partition array (512 bytes) for checking a GPT parser and its two CRC32
+  validations. All fields are little-endian (UEFI 2.10 section 5.3). Both CRCs
+  use the standard IEEE/zlib CRC32 (poly 0x04C11DB7, reflected, init and final
+  XOR 0xFFFFFFFF). Real disks use NumberOfPartitionEntries = 128 (a 16384-byte
+  array); this fixture uses 4 entries to stay compact, which the spec permits
+  because each CRC covers exactly the declared byte range.
+header_layout:   # offsets within the 92-byte header
+  endian: little
+  fields:
+    - [0, 8, signature, "EFI PART"]
+    - [8, 4, revision, "0x00010000 = v1.0"]
+    - [12, 4, header_size, "92"]
+    - [16, 4, header_crc32, "CRC32 of header_size bytes with this field zeroed"]
+    - [24, 8, my_lba, "1 (primary header)"]
+    - [32, 8, alternate_lba, "last LBA (backup header)"]
+    - [40, 8, first_usable_lba, null]
+    - [48, 8, last_usable_lba, null]
+    - [56, 16, disk_guid, "mixed-endian GUID"]
+    - [72, 8, partition_entry_lba, "2"]
+    - [80, 4, num_partition_entries, "4"]
+    - [84, 4, size_of_partition_entry, "128"]
+    - [88, 4, partition_entry_array_crc32, "CRC32 of num*size bytes of the array"]
+entry_layout:    # offsets within each 128-byte entry
+    - [0, 16, type_guid, "all-zero = unused entry"]
+    - [16, 16, unique_guid, null]
+    - [32, 8, starting_lba, null]
+    - [40, 8, ending_lba, "inclusive"]
+    - [48, 8, attributes, null]
+    - [56, 72, name, "36 UTF-16LE code units, NUL-padded"]
+checks:
+  header_crc_field_zeroed_before_hashing: true
+  header_crc_covers: "header_size (92) bytes"
+  array_crc_covers: "num_partition_entries * size_of_partition_entry (512) bytes"
+  guid_on_disk: "Data1/2/3 little-endian, Data4 in text order"
+expected:
+  header_hex: 4546492050415254000001005c0000005b562ad50000000001000000000000003f0000000000000022000000000000001e000000000000001112131415161718191a1b1c1d1e1f20020000000000000004000000800000004363ab11
+  entry_array_hex: 28732ac11ff8d211ba4b00a0c93ec93b0102030405060708090a0b0c0d0e0f102200000000000000250000000000000000000000000000004500460049002000530079007300740065006d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  signature_ok: true
+  header_crc32: "d52a565b"
+  partition_entry_array_crc32: "11ab6343"
+  entry0:
+    type: "EFI System Partition (C12A7328-F81F-11D2-BA4B-00A0C93EC93B)"
+    starting_lba: 34
+    ending_lba: 37
+    name: "EFI System"
+  entries_1_to_3: "all zero (unused), still covered by the array CRC"
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    No protective MBR, backup header, or partition contents are included. A
+    valid pair of CRC32s establishes structural integrity of the header and
+    entry array, not that the described partitions exist on a device or that the
+    disk would boot. The backup header at the last LBA has its own independently
+    computed CRCs and is not part of this fixture.

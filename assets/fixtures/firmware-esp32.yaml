@@ -1,0 +1,45 @@
+schema_version: 1
+kind: firmware_image_fixtures
+format: esp32_application_image
+description: >
+  Synthetic ESP32 application image (ESP-IDF esp_app_format.h) for checking the
+  24-byte header, one segment, the 1-byte XOR checksum, and the appended SHA256.
+  All scalars little-endian. Magic is 0xE9. The checksum is 0xEF XOR of every
+  segment DATA byte (segment and image headers are not XORed), placed as the last
+  byte of a 16-byte-aligned block. When hash_appended == 1, a 32-byte SHA256 of
+  the entire image through the checksum byte is appended (a corruption check,
+  independent of secure boot).
+header_layout:
+    - [0, 1, magic, "0xE9"]
+    - [1, 1, segment_count, "1"]
+    - [2, 1, spi_mode, null]
+    - [3, 1, spi_speed_size, "low nibble speed, high nibble size"]
+    - [4, 4, entry_addr, "0x40080000"]
+    - [8, 1, wp_pin, "0xEE = disabled"]
+    - [9, 3, spi_pin_drv, null]
+    - [12, 2, chip_id, "0x0000 = ESP32"]
+    - [23, 1, hash_appended, "1 -> 32-byte SHA256 appended"]
+segment_header: "load_addr (4) + data_len (4), before each segment's data"
+checks:
+  magic_offset: 0
+  xor_checksum: "0xEF XOR of all segment data bytes; last byte of a 16-byte-aligned block"
+  appended_sha256_covers: "entire image from byte 0 through the checksum byte"
+expected:
+  image_hex: e901022f00000840ee0000000000000000ffff00000000010000403f08000000010203040506070800000000000000e72d1928804e3a70f45be1da06334eea50e767ef0d8b2ba5743aa9c1dcc89e86da
+  magic_ok: true
+  segment_count: 1
+  entry_addr: "0x40080000"
+  segment0: {load_addr: "0x3f400000", data_len: 8}
+  xor_checksum: "0xe7"
+  hash_appended: true
+  appended_sha256: 2d1928804e3a70f45be1da06334eea50e767ef0d8b2ba5743aa9c1dcc89e86da
+  sha256_recompute: "sha256(image_without_trailing_32_bytes) == appended_sha256"
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    The XOR checksum and appended SHA256 are corruption checks over the image
+    bytes; neither is a signature. Secure Boot v2 signature blocks, which would
+    follow the SHA256, are absent, so this fixture cannot establish the image
+    would pass a secure-boot check. Segment load addresses are declared, not
+    validated against a device memory map.

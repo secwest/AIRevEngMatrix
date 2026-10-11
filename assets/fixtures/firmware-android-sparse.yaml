@@ -1,0 +1,41 @@
+schema_version: 1
+kind: firmware_format_fixtures
+format: android_sparse_image
+description: >
+  Synthetic Android sparse image (AOSP libsparse sparse_format.h) for checking a
+  sparse expander and its CRC32. Header magic 0xED26FF3A, all little-endian. The
+  image_checksum is the IEEE/zlib CRC32 of the EXPANDED (non-sparse) image, with
+  DONT_CARE regions counted as zero bytes. A real image uses blk_sz 4096; this
+  fixture uses 16 to stay compact (blk_sz need only be a multiple of 4).
+header_layout:
+    - [0, 4, magic, "0xED26FF3A"]
+    - [4, 2, major_version, "1 (reject higher major)"]
+    - [6, 2, minor_version, "0"]
+    - [8, 2, file_hdr_sz, "28"]
+    - [10, 2, chunk_hdr_sz, "12"]
+    - [12, 4, blk_sz, "16"]
+    - [16, 4, total_blks, "4 (expanded image = total_blks*blk_sz = 64 bytes)"]
+    - [20, 4, total_chunks, "4"]
+    - [24, 4, image_checksum, "CRC32 of the expanded image"]
+chunk_types: {RAW: "0xCAC1", FILL: "0xCAC2 (4-byte pattern repeated)", DONT_CARE: "0xCAC3 (no data, zero output)", CRC32: "0xCAC4"}
+checks:
+  expand: "RAW copies data; FILL repeats its 4 bytes; DONT_CARE emits zeros"
+  image_checksum_covers: "the full expanded image, DONT_CARE regions as zeros"
+expected:
+  sparse_hex: 3aff26ed010000001c000c00100000000400000004000000c4b08218c1ca0000010000001c000000000102030405060708090a0b0c0d0e0fc2ca00000100000010000000a5a5a5a5c3ca0000010000000c000000c1ca0000010000001c000000ffffffffffffffffffffffffffffffff
+  expanded_hex: 000102030405060708090a0b0c0d0e0fa5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a500000000000000000000000000000000ffffffffffffffffffffffffffffffff
+  expanded_length: 64
+  image_checksum_crc32: "1882b0c4"
+  chunks:
+    - {type: RAW, out_bytes: 16}
+    - {type: FILL, pattern: "a5a5a5a5", out_bytes: 16}
+    - {type: DONT_CARE, out_bytes: 16, note: "zeros in the expansion"}
+    - {type: RAW, out_bytes: 16}
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    Expansion plus a matching CRC32 establishes the sparse encoding is internally
+    consistent; it does not establish that the expanded bytes are a valid
+    filesystem or the image a device would accept. A DONT_CARE region is defined
+    as unspecified, modeled here as zeros for the checksum.

@@ -1,0 +1,45 @@
+schema_version: 1
+kind: firmware_image_fixtures
+format: mcuboot_image
+description: >
+  Synthetic MCUboot image (mcu-tools bootutil image.h) for checking the 32-byte
+  header, the TLV areas, and the SHA256 coverage. All scalars little-endian; the
+  32-byte header is static-asserted in the source. IMAGE_MAGIC on disk is
+  3D B8 F3 96. The SHA256 TLV (type 0x10) covers, as one hash in order: the
+  header (ih_hdr_size), the image payload (ih_img_size), and the PROTECTED TLV
+  area (0x6908, ih_protect_tlv_size) including its info header. The unprotected
+  TLV area (0x6907) that carries the SHA256 and signature TLVs is NOT hashed;
+  signatures sign over the SHA256 digest.
+header_layout:
+    - [0, 4, ih_magic, "0x96f3b83d"]
+    - [4, 4, ih_load_addr, "0xFFFFFFFF (unused)"]
+    - [8, 2, ih_hdr_size, "32"]
+    - [10, 2, ih_protect_tlv_size, "size of the 0x6908 area"]
+    - [12, 4, ih_img_size, "payload bytes, excludes header"]
+    - [16, 4, ih_flags, "0"]
+    - [20, 8, ih_ver, "major.minor.revision+build = 1.2.3+4"]
+    - [28, 4, _pad1, "0"]
+tlv:
+  info: "it_magic (0x6907 unprotected / 0x6908 protected) + it_tlv_tot incl. the 4-byte info header"
+  entry: "it_type + it_len (excludes the 4-byte entry header) + value"
+  sha256_type: "0x10"
+checks:
+  sha256_covers: "header + payload + protected TLV area (0x6908), in that order"
+  sha256_excludes: "the unprotected 0x6907 area holding the hash and signatures"
+expected:
+  image_hex: 3db8f396ffffffff20000c002000000000000000010203000400000000000000200001200000000000000000000000000000000000000000000000000000000008690c0050000400010000000769280010002000ec375dad6c51f2eb84771257f125b63994dd7d912b8159f21c05bcb207af51c3
+  magic_ok: true
+  hdr_size: 32
+  img_size: 32
+  protect_tlv_size: 12
+  version: "1.2.3+4"
+  sha256_tlv_value: ec375dad6c51f2eb84771257f125b63994dd7d912b8159f21c05bcb207af51c3
+  sha256_recompute: "sha256(header || payload || protected_area) == sha256_tlv_value"
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    A matching SHA256 TLV establishes integrity of the hashed regions only; it
+    is not a signature and does not establish authenticity. Signature TLVs
+    (0x20-0x25) and the public key are absent, so this fixture cannot be used to
+    claim the image would be accepted by a bootloader enforcing secure boot.

@@ -1,0 +1,44 @@
+schema_version: 1
+kind: firmware_format_fixtures
+format: uefi_firmware_volume_header
+description: >
+  Synthetic UEFI firmware volume header (EDK II PiFirmwareVolume.h, UEFI PI
+  spec). All scalars little-endian. Signature '_FVH' (0x4856465F) is at offset
+  0x28. The 16-bit header checksum makes the sum of the header, read as an array
+  of little-endian UINT16 words over exactly HeaderLength bytes, equal to 0 mod
+  2^16; it covers the header only, not the FV body or the extended header, and
+  HeaderLength must be even. FileSystemGuid here is the FFS2 GUID.
+header_layout:
+    - [0, 16, zero_vector, "all zero"]
+    - [16, 16, file_system_guid, "FFS2 (8C8CE578-8A3D-4F1C-9935-896185C32DD3)"]
+    - [32, 8, fv_length, "0x2000"]
+    - [40, 4, signature, "0x4856465F '_FVH'"]
+    - [44, 4, attributes, null]
+    - [48, 2, header_length, "72 (0x48)"]
+    - [50, 2, checksum, "16-bit, makes the UINT16 sum zero"]
+    - [52, 2, ext_header_offset, "0 (none)"]
+    - [54, 1, reserved, "0"]
+    - [55, 1, revision, "2"]
+    - [56, 8n, block_map, "NumBlocks,Length entries, terminated by 0,0"]
+checks:
+  signature_offset: 40
+  checksum_algorithm: "sum of HeaderLength/2 little-endian UINT16 words == 0 (mod 2^16)"
+  checksum_covers: "HeaderLength bytes (the header only)"
+  header_length_even: true
+expected:
+  header_hex: 0000000000000000000000000000000078e58c8c3d8a1c4f9935896185c32dd300200000000000005f465648fff804004800cdcc0000000202000000001000000000000000000000
+  signature_ok: true
+  header_length: 72
+  checksum: "0xcccd"
+  uint16_sum_mod_2e16: 0
+  block_map:
+    - {num_blocks: 2, length: "0x1000"}
+    - {num_blocks: 0, length: 0, note: "terminator"}
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    A valid header checksum establishes the FV header is internally consistent;
+    it does not establish the FV body, its FFS files, or any contained PE modules
+    are present or valid, nor that a module dispatches in a given boot mode. FFS
+    file headers and modules are parsed at their own layer.

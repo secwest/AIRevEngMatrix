@@ -1,0 +1,41 @@
+schema_version: 1
+kind: firmware_format_fixtures
+format: intel_hex
+description: >
+  Synthetic Intel HEX records for checking a record parser, its per-record
+  checksum, and address reconstruction. Each record is
+  ':' + LL + AAAA + TT + data + CC where CC is the two's-complement of the sum
+  of all prior record bytes, so the sum of every byte in a record (including CC)
+  is 0 mod 256. Record types: 00 data, 01 EOF, 04 extended linear address
+  (sets bits 16..31 of the address). This fixture deliberately leaves a byte
+  hole and jumps to a far region to exercise the rule that concatenating
+  records in file order produces a false memory layout.
+records:
+    - ":020000040800F2"
+    - ":0800000000100020810000083F"
+    - ":04001000DEADBEEFB4"
+    - ":020000040801F1"
+    - ":02000000CAFE36"
+    - ":00000001FF"
+checks:
+  record_checksum: "sum of all record bytes incl. checksum == 0 (mod 256)"
+  address_base: "type-04 record sets the upper 16 bits; data addresses add the low 16"
+expected:
+  all_record_checksums_valid: true
+  decoded:
+    - {base: "0x08000000", addr: "0x08000000", bytes: "0010002081000008"}
+    - {base: "0x08000000", addr: "0x08000010", bytes: "deadbeef", note: "leaves 0x08000008..0x0800000F unspecified (a hole)"}
+    - {base: "0x08010000", addr: "0x08010000", bytes: "cafe", note: "non-contiguous with the prior region"}
+  false_layout_warning: >
+    Writing the record payloads back to back yields 0010002081000008 deadbeef
+    cafe, which is NOT the device memory image: the 8-byte hole and the 0x10000
+    gap are lost. A correct reader places each record at its own address and
+    reports holes and gaps.
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    A valid checksum confirms a record was transcribed without single-byte
+    corruption; it does not establish the load addresses are correct for the
+    target or that overlapping records were intended. Holes and overlaps are
+    reported, never silently filled.

@@ -1,0 +1,47 @@
+schema_version: 1
+kind: firmware_format_fixtures
+format: flattened_devicetree_dtb
+description: >
+  Minimal version-17 flattened devicetree blob (Devicetree Specification v0.4,
+  flattened format) encoding /{ #address-cells = <1>; }. All header and token
+  words are big-endian. There is no CRC in a DTB; integrity in a FIT image comes
+  from hash subnodes, which are separate. Correctness here is structural: the
+  header offsets, 8-byte alignment of the reservation block, 4-byte alignment of
+  the structure block, token walk, and totalsize == blob length.
+header_layout:   # big-endian u32
+    - [0, 4, magic, "0xD00DFEED"]
+    - [4, 4, totalsize, "103 (0x67)"]
+    - [8, 4, off_dt_struct, "0x38"]
+    - [12, 4, off_dt_strings, "0x58"]
+    - [16, 4, off_mem_rsvmap, "0x28 (8-byte aligned)"]
+    - [20, 4, version, "17"]
+    - [24, 4, last_comp_version, "16"]
+    - [28, 4, boot_cpuid_phys, "0"]
+    - [32, 4, size_dt_strings, "0x0F"]
+    - [36, 4, size_dt_struct, "0x20"]
+structure_tokens: {BEGIN_NODE: "0x1 + name, NUL-padded to 4", END_NODE: "0x2", PROP: "0x3 + len + nameoff + value, padded to 4", NOP: "0x4", END: "0x9"}
+checks:
+  magic: "0xD00DFEED big-endian"
+  off_mem_rsvmap_8_aligned: true
+  off_dt_struct_4_aligned: true
+  totalsize_equals_length: true
+expected:
+  dtb_hex: d00dfeed000000670000003800000058000000280000001100000010000000000000000f0000002000000000000000000000000000000000000000010000000000000003000000040000000000000001000000020000000923616464726573732d63656c6c7300
+  totalsize: 103
+  length: 103
+  version: 17
+  memory_reservation_block: "single terminator entry (address=0, size=0)"
+  tokens:
+    - "FDT_BEGIN_NODE root (name = empty string)"
+    - "FDT_PROP #address-cells = <0x00000001>"
+    - "FDT_END_NODE"
+    - "FDT_END"
+  strings_block: "'#address-cells' + NUL (15 bytes)"
+result:
+  outcome: unobserved
+  parser_engine: null
+  limitations: >
+    A structurally valid DTB describes intended hardware and configuration; it
+    does not establish that a connected board matches it. The reservation block
+    here is just its terminator. For FIT images, the data/hash/signature subnodes
+    are additional FDT properties checked at their own layer.

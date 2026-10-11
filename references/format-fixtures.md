@@ -39,6 +39,8 @@ fixture check and the target check as separate outcomes, as the
 | [hermes-hbc-header.yaml](../assets/fixtures/hermes-hbc-header.yaml) | Hermes HBC header | magic + release-locked version gate |
 | [il2cpp-metadata.yaml](../assets/fixtures/il2cpp-metadata.yaml) | Unity IL2CPP metadata | `0xFAB11BAF` magic + version gate |
 | [ebpf-object.yaml](../assets/fixtures/ebpf-object.yaml) | eBPF ELF object | `EM_BPF` machine, program section, instruction decode |
+| [asm-roundtrip.yaml](../assets/fixtures/asm-roundtrip.yaml) | x86-64 instruction stream | objdump-confirmed decode; encode compares semantics |
+| [evidence-bundle.yaml](../assets/fixtures/evidence-bundle.yaml) | portable evidence bundle | SHA-256 recompute; tamper/traversal/duplicate rejected |
 
 ## Native binaries
 
@@ -193,6 +195,26 @@ retransmission contributes nothing new, and the explicit missing range; the IP
 and TCP checksums are real and recompute. A TCP stream with a missing segment
 stays incomplete even when a decoder recognizes later messages, and a
 retransmission is not new data.
+
+## Instruction decode and evidence integrity
+
+The [x86-64 fixture](../assets/fixtures/asm-roundtrip.yaml) is a seven-instruction
+stream with its decode confirmed by GNU objdump (the independent oracle in this
+environment). It supports the "validate emitted bytes with an independent decode"
+check for an assembler/disassembler round trip: the decode direction is
+confirmed here, while assembling the mnemonics back is the encode check for a
+tool such as Keystone, which may choose an equivalent encoding — so an encode
+check compares semantics, not only bytes. A correct decode does not establish the
+stream is a valid or reachable function.
+
+The [evidence-bundle fixture](../assets/fixtures/evidence-bundle.yaml) is a
+portable bundle with one evidence record and a manifest whose SHA-256 digests are
+real and recompute over the exact record bytes. Its three rejection cases —
+digest mismatch (one record byte changed), path traversal (`../escape.json`), and
+a duplicate normalized path — encode the importer rules from
+[evidence-and-runtime.md](evidence-and-runtime.md). Unsigned digests detect
+tampering against the manifest but do not establish who produced the bundle, and
+a passing import is integrity and safe extraction, not correct claims.
 
 ## Using a fixture result
 

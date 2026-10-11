@@ -22,7 +22,7 @@ PCAP/PCAPNG analysis can use Wireshark/TShark or a bounded capture parser. Packe
 
 For remote fingerprintability, state the vantage point and what a remote peer can actually observe: headers, banners, TLS or protocol negotiation, response shapes, timing distributions, error codes, redirect patterns, resource paths or stable identifiers. Test stability across sessions, configurations and versions, with a control service or alternative implementation where possible. Report the preconditions for each signal and whether it identifies a product, version family, configuration or only a broad technology class. A local code trait is remotely fingerprintable only if a reachable path makes it observable. Keep probes within the user's authorized target and rate limits.
 
-Attribution follows the network path. TLS termination, reverse proxies, CDNs, shared libraries, and configurable banners can produce signals shared by many applications. A useful fingerprint record contains `signal | vantage | request/state preconditions | repetitions | controls | likely producer | supported specificity | counterexamples`. Correlated features from one shared component do not count as independent confirmation. Timing claims include sample counts, variability, and a control for network or load effects; a single response establishes only that observation.
+Attribution follows the network path. TLS termination, reverse proxies, CDNs, shared libraries, and configurable banners can produce signals shared by many applications. A useful fingerprint record contains `signal | vantage | request/state preconditions | repetitions | controls | likely producer | supported specificity | counterexamples`; the [fingerprint record template](../assets/templates/fingerprint-record.yaml) carries exactly these fields with a worked structure. Correlated features from one shared component do not count as independent confirmation. Timing claims include sample counts, variability, and a control for network or load effects; a single response establishes only that observation.
 
 ## Cross-artifact comparisons
 
@@ -53,6 +53,6 @@ When a result needs portable provenance, implement export/import as a digest-che
 - Running an identical deterministic fixture twice yields no capture diff after declared normalization; changing one output yields a localized difference.
 - An application graph path identifies the source record for every edge and refuses a path across mismatched build IDs.
 - An obligation with a passing static check but missing runtime fixture remains open; adding a comparable passing runtime verifier closes it.
-- A tampered exported evidence file fails import digest verification.
+- A tampered exported evidence file fails import digest verification. The [evidence-bundle fixture](../assets/fixtures/evidence-bundle.yaml) makes this checkable: its record and manifest SHA-256 digests recompute, while the tampered, path-traversal, and duplicate-path cases are rejected (see [format fixtures](format-fixtures.md)).
 - A TCP stream with a missing segment remains incomplete, even if a decoder recognizes later messages.
 - A header shared by a proxy and several unrelated applications is attributed at that shared layer until a discriminating application signal is established.

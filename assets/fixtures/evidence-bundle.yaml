@@ -1,0 +1,54 @@
+schema_version: 1
+kind: evidence_bundle_fixtures
+format: portable_evidence_bundle
+description: >
+  A portable evidence bundle and three rejection cases, for checking an
+  importer against the rules in evidence-and-runtime.md. The manifest lists each
+  record's relative path, size, and SHA-256; its canonical digest is computed
+  over the manifest with its own digest field excluded. Import verification
+  recomputes each file's SHA-256 and rejects path traversal, duplicate
+  normalized paths, and digest mismatch. All digests here are real SHA-256
+  values over the exact record bytes, recomputable independently.
+record:
+  path: records/r1.json
+  content_json: '{"artifact_id":"sha256:abababababababababababababababababababababababababababababababab","claim":"function at 0x401000 computes a CRC32 over its second argument","confidence":"derived","kind":"static_inference","location":{"coordinate":"virtual_address","value":"0x401000"}}'
+  size: 274
+  sha256: 5b300e1b77dd1c6acaa03efd078c6226b90c7fc1c62272762ce0c0421d5a0f4f
+manifest:
+  schema_version: 1
+  entries:
+    - path: records/r1.json
+      size: 274
+      sha256: 5b300e1b77dd1c6acaa03efd078c6226b90c7fc1c62272762ce0c0421d5a0f4f
+  canonical_digest: 6871bbc668085202808c3e0c12574acbb756c2fb19a05b500e7e7e02a0c352f8   # sha256 over the manifest with this field excluded
+checks:
+  record_digest_recompute: "sha256(content_json bytes) == record.sha256"
+  manifest_digest_recompute: "sha256(canonical manifest without canonical_digest) == canonical_digest"
+cases:
+  - id: valid
+    expect: accept
+    note: "every file's recomputed SHA-256 matches the manifest; no traversal or duplicates"
+  - id: digest_mismatch
+    tampered_content_json: '{"artifact_id":"sha256:abababababababababababababababababababababababababababababababab","claim":"function at 0x401000 computes a CRC16 over its second argument","confidence":"derived","kind":"static_inference","location":{"coordinate":"virtual_address","value":"0x401000"}}'
+    tampered_sha256: 749ad8ef02c707550ddeb04ff34740313268d85d44006be28f74498852a04d13
+    expect: reject
+    reason: digest_mismatch
+    note: "the record bytes were changed (CRC32 -> CRC16); recomputed SHA-256 no longer matches the manifest entry"
+  - id: path_traversal
+    entry_path: "../escape.json"
+    expect: reject
+    reason: path_traversal
+    note: "a relative path that escapes the extraction tree is rejected before any write"
+  - id: duplicate_normalized_path
+    entry_paths: ["records/r1.json", "records/./r1.json"]
+    expect: reject
+    reason: duplicate_normalized_path
+    note: "two entries normalize to the same path; the importer rejects the collision"
+result:
+  outcome: unobserved
+  importer_engine: null
+  limitations: >
+    Unsigned SHA-256 digests detect tampering against the manifest but do not
+    establish who produced the bundle; authenticating the producer needs a real
+    signature and verification step. A passing import establishes integrity and
+    safe extraction, not that the contained claims are correct.

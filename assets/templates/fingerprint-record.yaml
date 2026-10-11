@@ -1,0 +1,48 @@
+schema_version: 1
+kind: fingerprint_record
+record_state: draft
+question: null
+# Records a remote-fingerprint hypothesis: an observable signal tied to a
+# reachable listener, its preconditions, repeatability, and controls. Pairs with
+# the remote-fingerprintability method in process-and-reconstruction.md. A
+# fingerprint claim is an attribution hypothesis, not proof of a specific build.
+target:
+  subject: null              # the implementation/build/config the signal is attributed to
+  reachable_listener: null   # host:port / endpoint and the service behind it
+  authorization: null        # the authority for the probe or capture
+vantage:
+  location: null             # where the observation was made (same host, LAN, WAN, proxied)
+  capture_or_probe: null     # passive capture vs actively generated request
+  tooling_and_version: null
+signal:
+  description: null          # the observable feature (banner, option set, timing, error shape, TLS/JA3, ...)
+  request_preconditions: null # what must be sent/true to elicit it
+  response_or_timing: null   # the measured response, order, or timing
+  encoding: null
+repetitions:
+  count: null
+  across_sessions: unobserved
+  across_versions: unobserved
+  across_configurations: unobserved
+controls:
+  negative_control: null     # a different implementation/config that should NOT show the signal
+  baseline: null
+  confounders: []            # NAT, load balancers, caches, middleboxes, offload that can alter the signal
+assessment:
+  likely_producer: null
+  supported_specificity: null # does the signal distinguish this subject, or a whole family
+  counterexamples: []
+checks:
+  listener_reachability_confirmed: unobserved
+  precondition_necessary: unobserved     # removing it removes the signal
+  repeatable_across_controls: unobserved
+  distinguishes_from_negative_control: unobserved
+result:
+  outcome: unobserved        # observed-positive, observed-negative, or static hypothesis only
+  confidence: null           # observed | derived | candidate
+  limitations: >
+    An observable signal attributes to a subject only as far as the controls
+    separate it from other implementations and configurations. Middleboxes,
+    proxies, caching, and version backports can add or remove a signal. A static
+    hypothesis with no authorized observation remains a candidate, not a
+    confirmed fingerprint.
